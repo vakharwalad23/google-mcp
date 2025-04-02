@@ -3,6 +3,12 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "bin": {
+    "google-mcp": "./index.ts"
+  },
+  "scripts": {
+    "dev": "bun run index.ts"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
@@ -11,7 +17,6 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.8.0",
-    "googleapis": "^148.0.0",
-    "zod": "^3.24.2"
+    "googleapis": "^148.0.0"
   }
 }
