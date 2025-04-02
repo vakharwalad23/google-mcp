@@ -1,0 +1,17 @@
+{
+  "name": "google-mcp",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.8.0",
+    "googleapis": "^148.0.0",
+    "zod": "^3.24.2"
+  }
+}
