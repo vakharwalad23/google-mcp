@@ -1,13 +1,30 @@
 {
   "name": "google-mcp",
   "module": "index.ts",
+  "version": "0.0.1",
   "type": "module",
-  "private": true,
+  "description": "Google MCP tools for calendar, drive, gmail etc...",
+  "license": "MIT",
+  "author": "Dhruv Vakharwala",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vakharwalad23/google-mcp.git"
+  },
+  "keywords": [
+    "google",
+    "mcp",
+    "calendar",
+    "drive",
+    "gmail",
+    "cursor",
+    "claude"
+  ],
   "bin": {
     "google-mcp": "./index.ts"
   },
   "scripts": {
-    "dev": "bun run index.ts"
+    "dev": "bun run index.ts",
+    "test": "bun test"
   },
   "devDependencies": {
     "@types/bun": "latest"

@@ -20,7 +20,7 @@ const googleCalendarInstance = new GoogleCalendar(authClient);
 
 // Initialize the MCP server
 const server = new Server(
-  { name: "Google MCP Server", version: "1.0.0" },
+  { name: "Google MCP Server", version: "0.0.1" },
   { capabilities: { tools: {} } }
 );
 
