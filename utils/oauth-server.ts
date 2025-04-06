@@ -2,7 +2,7 @@ import * as http from "http";
 import { URL } from "url";
 import { handleOAuthCallback } from "./auth";
 
-const DEFAULT_PORT = process.env.PORT || 3000;
+const DEFAULT_PORT = process.env.PORT || 3001;
 
 export async function startOAuthServer(): Promise<void> {
   let serverClosed = false;
@@ -76,9 +76,7 @@ export async function startOAuthServer(): Promise<void> {
     });
 
     // Start the server
-    server.listen(port, () => {
-      console.log(`OAuth callback server listening at ${redirectUri}`);
-    });
+    server.listen(port);
 
     // Handle server errors
     server.on("error", (err) => {

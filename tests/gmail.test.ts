@@ -49,8 +49,8 @@ describe("Google Gmail MCP Tests", () => {
     private_key: process.env.GOOGLE_PRIVATE_KEY || "fake-key",
   };
 
-  beforeEach(() => {
-    const authClient = createAuthClient(credentials);
+  beforeEach(async () => {
+    const authClient = await createAuthClient();
     googleGmailInstance = new GoogleGmail(authClient);
     serverInstance = new Server(
       { name: "Google MCP Server", version: "0.0.1" },

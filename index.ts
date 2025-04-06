@@ -29,9 +29,9 @@ import {
   isModifyLabelsArgs,
 } from "./utils/helper";
 
-const authClient = createAuthClient();
-const googleCalendarInstance = new GoogleCalendar(authClient);
-const googleGmailInstance = new GoogleGmail(authClient);
+let googleCalendarInstance: GoogleCalendar;
+let googleGmailInstance: GoogleGmail;
+let initializationPromise: Promise<void>;
 
 // Initialize the MCP server
 const server = new Server(
@@ -47,6 +47,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
 // Handle the "call tool" request
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
+    await initializationPromise;
+    if (!googleCalendarInstance || !googleGmailInstance) {
+      throw new Error("Authentication failed to initialize services");
+    }
     const { name, arguments: args } = request.params;
     if (!args) throw new Error("No arguments provided");
 
@@ -370,3 +374,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 // Connect the server to stdio transport
 const transport = new StdioServerTransport();
 server.connect(transport);
+
+initializationPromise = createAuthClient()
+  .then((authClient) => {
+    googleCalendarInstance = new GoogleCalendar(authClient);
+    googleGmailInstance = new GoogleGmail(authClient);
+  })
+  .catch((error) => {
+    throw error; // This will reject the promise, and tool handlers will reflect the error
+  });
