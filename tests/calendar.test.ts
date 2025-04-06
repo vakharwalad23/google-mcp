@@ -14,7 +14,6 @@ import {
   isListCalendarsArgs,
 } from "../utils/helper";
 
-// Test wrapper for detailed logging
 function testWithLogging(name: string, testFn: () => Promise<void>) {
   test(name, async () => {
     console.log(`\n🧪 Running test: ${name}`);
@@ -41,30 +40,22 @@ describe("Google MCP Server", () => {
     calendarId: "",
   };
 
-  // Set up with real credentials - for local testing, provide your own
   const credentials = {
     client_email: process.env.GOOGLE_CLIENT_EMAIL || "test@example.com",
     private_key: process.env.GOOGLE_PRIVATE_KEY || "fake-key",
   };
 
   beforeEach(() => {
-    // Create a real auth client with real or test credentials
     const authClient = createAuthClient(credentials);
-
-    // Create actual GoogleCalendar instance
     googleCalendarInstance = new GoogleCalendar(authClient);
-
-    // Initialize server
     serverInstance = new Server(
       { name: "Google MCP Server", version: "0.0.1" },
       { capabilities: { tools: {} } }
     );
 
-    // Set up ListTools handler and keep reference
     listToolsHandler = async () => ({ tools });
     serverInstance.setRequestHandler(ListToolsRequestSchema, listToolsHandler);
 
-    // Set up CallTool handler and keep reference
     callToolHandler = async (request: any) => {
       try {
         const { name, arguments: args } = request.params;
@@ -220,16 +211,13 @@ describe("Google MCP Server", () => {
   });
 
   afterEach(() => {
-    // Clean up
     serverInstance = null;
     googleCalendarInstance = null;
     listToolsHandler = null;
     callToolHandler = null;
   });
 
-  // ---------------------------------------
   // PHASE 1: Basic API and Setup Tests
-  // ---------------------------------------
   testWithLogging("should list available tools", async () => {
     console.log("📋 Calling listToolsHandler...");
     const result = await listToolsHandler({
@@ -255,7 +243,6 @@ describe("Google MCP Server", () => {
     expect(result.isError).toBe(false);
     expect(result.content[0].text).toBeDefined();
 
-    // Store the primary calendar ID if available
     if (result.content[0].text.includes("Primary")) {
       const match = result.content[0].text.match(/.*Primary.*ID: ([^\n]+)/);
       if (match && match[1]) {
@@ -266,7 +253,6 @@ describe("Google MCP Server", () => {
   });
 
   testWithLogging("should set default calendar ID", async () => {
-    // Use the calendar ID from the previous test if available
     const calendarId = testState.calendarId || "primary";
     console.log(`📋 Setting default calendar ID to: ${calendarId}`);
     const result = await callToolHandler({
@@ -283,14 +269,12 @@ describe("Google MCP Server", () => {
     expect(result.isError).toBe(false);
   });
 
-  // ---------------------------------------
   // PHASE 2: Create Event and Capture ID
-  // ---------------------------------------
   testWithLogging("should create an event", async () => {
     const eventDetails = {
       summary: "Test Event",
-      start: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
-      end: new Date(Date.now() + 90000000).toISOString(), // Tomorrow + 1 hour
+      start: new Date(Date.now() + 86400000).toISOString(),
+      end: new Date(Date.now() + 90000000).toISOString(),
     };
     console.log("📋 Creating event with details:", eventDetails);
     const result = await callToolHandler({
@@ -304,7 +288,6 @@ describe("Google MCP Server", () => {
     expect(result.isError).toBe(false);
     expect(result.content[0].text).toContain("created with ID:");
 
-    // Extract and save the event ID for later tests
     const match = result.content[0].text.match(/created with ID: ([^ ]+) in/);
     if (match && match[1]) {
       testState.eventId = match[1];
@@ -314,9 +297,7 @@ describe("Google MCP Server", () => {
     expect(testState.eventId).toBeTruthy();
   });
 
-  // ---------------------------------------
   // PHASE 3: Use the Event ID in Operations
-  // ---------------------------------------
   testWithLogging("should get events", async () => {
     console.log("📋 Getting events (limit: 5)...");
     const result = await callToolHandler({
@@ -329,7 +310,6 @@ describe("Google MCP Server", () => {
 
     expect(result.isError).toBe(false);
     expect(result.content[0].text).toContain("Calendar:");
-    // Verify our created event is in the list
     expect(result.content[0].text).toContain("Test Event");
   });
 
@@ -372,8 +352,8 @@ describe("Google MCP Server", () => {
   testWithLogging("should find free time", async () => {
     const searchParams = {
       startDate: new Date().toISOString(),
-      endDate: new Date(Date.now() + 86400000 * 7).toISOString(), // One week from now
-      duration: 60, // 60 minutes
+      endDate: new Date(Date.now() + 86400000 * 7).toISOString(),
+      duration: 60,
     };
     console.log(`📋 Finding free time slots with parameters:`, searchParams);
     const result = await callToolHandler({
@@ -388,9 +368,7 @@ describe("Google MCP Server", () => {
     expect(result.content[0].text).toBeTruthy();
   });
 
-  // ---------------------------------------
   // PHASE 4: Error Handling Tests
-  // ---------------------------------------
   testWithLogging("should handle invalid tool name", async () => {
     console.log("📋 Testing invalid tool name...");
     const result = await callToolHandler({
@@ -419,9 +397,7 @@ describe("Google MCP Server", () => {
     expect(result.content[0].text).toContain("Error:");
   });
 
-  // ---------------------------------------
   // PHASE 5: Clean Up - Delete Event
-  // ---------------------------------------
   testWithLogging("should delete an event", async () => {
     expect(testState.eventId).toBeTruthy();
     console.log(`📋 Deleting event with ID: ${testState.eventId}`);
