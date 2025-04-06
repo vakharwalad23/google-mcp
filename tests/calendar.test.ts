@@ -4,16 +4,15 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import GoogleCalendar from "./utils/calendar";
-import tools from "./tools";
-import { createAuthClient } from "./utils/auth";
+import GoogleCalendar from "../utils/calendar";
+import tools from "../tools";
+import { createAuthClient } from "../utils/auth";
 import {
   isCreateEventArgs,
   isGetEventsArgs,
   isSetDefaultCalendarArgs,
   isListCalendarsArgs,
-} from "./utils/helper";
-import { google } from "googleapis";
+} from "../utils/helper";
 
 // Test wrapper for detailed logging
 function testWithLogging(name: string, testFn: () => Promise<void>) {
@@ -35,6 +34,12 @@ describe("Google MCP Server", () => {
   let googleCalendarInstance: GoogleCalendar | null;
   let listToolsHandler: any;
   let callToolHandler: any;
+
+  // Shared state to store created event ID
+  const testState = {
+    eventId: "",
+    calendarId: "",
+  };
 
   // Set up with real credentials - for local testing, provide your own
   const credentials = {
@@ -139,6 +144,58 @@ describe("Google MCP Server", () => {
             };
           }
 
+          case "google_calendar_get_event": {
+            const { eventId, calendarId } = args;
+            const result = await googleCalendarInstance?.getEvent(
+              eventId,
+              calendarId
+            );
+            return {
+              content: [{ type: "text", text: result }],
+              isError: false,
+            };
+          }
+
+          case "google_calendar_update_event": {
+            const { eventId, summary, description, calendarId } = args;
+            const changes = { summary, description };
+            const result = await googleCalendarInstance?.updateEvent(
+              eventId,
+              changes,
+              calendarId
+            );
+            return {
+              content: [{ type: "text", text: result }],
+              isError: false,
+            };
+          }
+
+          case "google_calendar_delete_event": {
+            const { eventId, calendarId } = args;
+            const result = await googleCalendarInstance?.deleteEvent(
+              eventId,
+              calendarId
+            );
+            return {
+              content: [{ type: "text", text: result }],
+              isError: false,
+            };
+          }
+
+          case "google_calendar_find_free_time": {
+            const { startDate, endDate, duration, calendarIds } = args;
+            const result = await googleCalendarInstance?.findFreeTime(
+              startDate,
+              endDate,
+              duration,
+              calendarIds
+            );
+            return {
+              content: [{ type: "text", text: result }],
+              isError: false,
+            };
+          }
+
           default:
             return {
               content: [{ type: "text", text: `Unknown tool: ${name}` }],
@@ -170,6 +227,9 @@ describe("Google MCP Server", () => {
     callToolHandler = null;
   });
 
+  // ---------------------------------------
+  // PHASE 1: Basic API and Setup Tests
+  // ---------------------------------------
   testWithLogging("should list available tools", async () => {
     console.log("📋 Calling listToolsHandler...");
     const result = await listToolsHandler({
@@ -180,23 +240,6 @@ describe("Google MCP Server", () => {
     expect(result).toBeDefined();
     expect(result).toHaveProperty("tools");
     expect(result.tools.length).toBeGreaterThan(0);
-  });
-
-  testWithLogging("should set default calendar ID", async () => {
-    const testCalendarId = "test-calendar-id";
-    console.log(`📋 Setting default calendar ID to: ${testCalendarId}`);
-    const result = await callToolHandler({
-      params: {
-        name: "google_calendar_set_default",
-        arguments: { calendarId: testCalendarId },
-      },
-    });
-    console.log("📊 Result:", JSON.stringify(result, null, 2));
-
-    expect(result.content[0].text).toBe(
-      `Default calendar ID set to: ${testCalendarId}`
-    );
-    expect(result.isError).toBe(false);
   });
 
   testWithLogging("should list calendars", async () => {
@@ -211,8 +254,38 @@ describe("Google MCP Server", () => {
 
     expect(result.isError).toBe(false);
     expect(result.content[0].text).toBeDefined();
+
+    // Store the primary calendar ID if available
+    if (result.content[0].text.includes("Primary")) {
+      const match = result.content[0].text.match(/.*Primary.*ID: ([^\n]+)/);
+      if (match && match[1]) {
+        testState.calendarId = match[1];
+        console.log(`📌 Using calendar ID: ${testState.calendarId}`);
+      }
+    }
   });
 
+  testWithLogging("should set default calendar ID", async () => {
+    // Use the calendar ID from the previous test if available
+    const calendarId = testState.calendarId || "primary";
+    console.log(`📋 Setting default calendar ID to: ${calendarId}`);
+    const result = await callToolHandler({
+      params: {
+        name: "google_calendar_set_default",
+        arguments: { calendarId },
+      },
+    });
+    console.log("📊 Result:", JSON.stringify(result, null, 2));
+
+    expect(result.content[0].text).toBe(
+      `Default calendar ID set to: ${calendarId}`
+    );
+    expect(result.isError).toBe(false);
+  });
+
+  // ---------------------------------------
+  // PHASE 2: Create Event and Capture ID
+  // ---------------------------------------
   testWithLogging("should create an event", async () => {
     const eventDetails = {
       summary: "Test Event",
@@ -229,9 +302,21 @@ describe("Google MCP Server", () => {
     console.log("📊 Result:", JSON.stringify(result, null, 2));
 
     expect(result.isError).toBe(false);
-    expect(result.content[0].text).toContain("Event created with ID:");
+    expect(result.content[0].text).toContain("created with ID:");
+
+    // Extract and save the event ID for later tests
+    const match = result.content[0].text.match(/created with ID: ([^ ]+) in/);
+    if (match && match[1]) {
+      testState.eventId = match[1];
+      console.log(`📌 Captured event ID: ${testState.eventId}`);
+    }
+
+    expect(testState.eventId).toBeTruthy();
   });
 
+  // ---------------------------------------
+  // PHASE 3: Use the Event ID in Operations
+  // ---------------------------------------
   testWithLogging("should get events", async () => {
     console.log("📋 Getting events (limit: 5)...");
     const result = await callToolHandler({
@@ -244,8 +329,68 @@ describe("Google MCP Server", () => {
 
     expect(result.isError).toBe(false);
     expect(result.content[0].text).toContain("Calendar:");
+    // Verify our created event is in the list
+    expect(result.content[0].text).toContain("Test Event");
   });
 
+  testWithLogging("should get specific event by ID", async () => {
+    expect(testState.eventId).toBeTruthy();
+    console.log(`📋 Getting event details for ID: ${testState.eventId}`);
+    const result = await callToolHandler({
+      params: {
+        name: "google_calendar_get_event",
+        arguments: { eventId: testState.eventId },
+      },
+    });
+    console.log("📊 Result:", JSON.stringify(result, null, 2));
+
+    expect(result.isError).toBe(false);
+    expect(result.content[0].text).toContain("Event ID:");
+    expect(result.content[0].text).toContain("Test Event");
+  });
+
+  testWithLogging("should update an event", async () => {
+    expect(testState.eventId).toBeTruthy();
+    const updateDetails = {
+      eventId: testState.eventId,
+      summary: "Updated Event Title",
+      description: "This is an updated description",
+    };
+    console.log(`📋 Updating event with details:`, updateDetails);
+    const result = await callToolHandler({
+      params: {
+        name: "google_calendar_update_event",
+        arguments: updateDetails,
+      },
+    });
+    console.log("📊 Result:", JSON.stringify(result, null, 2));
+
+    expect(result.isError).toBe(false);
+    expect(result.content[0].text).toContain("Event updated successfully");
+  });
+
+  testWithLogging("should find free time", async () => {
+    const searchParams = {
+      startDate: new Date().toISOString(),
+      endDate: new Date(Date.now() + 86400000 * 7).toISOString(), // One week from now
+      duration: 60, // 60 minutes
+    };
+    console.log(`📋 Finding free time slots with parameters:`, searchParams);
+    const result = await callToolHandler({
+      params: {
+        name: "google_calendar_find_free_time",
+        arguments: searchParams,
+      },
+    });
+    console.log("📊 Result:", JSON.stringify(result, null, 2));
+
+    expect(result.isError).toBe(false);
+    expect(result.content[0].text).toBeTruthy();
+  });
+
+  // ---------------------------------------
+  // PHASE 4: Error Handling Tests
+  // ---------------------------------------
   testWithLogging("should handle invalid tool name", async () => {
     console.log("📋 Testing invalid tool name...");
     const result = await callToolHandler({
@@ -272,5 +417,23 @@ describe("Google MCP Server", () => {
 
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain("Error:");
+  });
+
+  // ---------------------------------------
+  // PHASE 5: Clean Up - Delete Event
+  // ---------------------------------------
+  testWithLogging("should delete an event", async () => {
+    expect(testState.eventId).toBeTruthy();
+    console.log(`📋 Deleting event with ID: ${testState.eventId}`);
+    const result = await callToolHandler({
+      params: {
+        name: "google_calendar_delete_event",
+        arguments: { eventId: testState.eventId },
+      },
+    });
+    console.log("📊 Result:", JSON.stringify(result, null, 2));
+
+    expect(result.isError).toBe(false);
+    expect(result.content[0].text).toContain("deleted successfully");
   });
 });

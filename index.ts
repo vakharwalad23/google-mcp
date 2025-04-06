@@ -13,6 +13,10 @@ import {
   isGetEventsArgs,
   isSetDefaultCalendarArgs,
   isListCalendarsArgs,
+  isGetEventArgs,
+  isUpdateEventArgs,
+  isDeleteEventArgs,
+  isFindFreeTimeArgs,
 } from "./utils/helper";
 
 const authClient = createAuthClient();
@@ -72,15 +76,34 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (!isCreateEventArgs(args)) {
           throw new Error("Invalid arguments for google_calendar_create_event");
         }
-        const { summary, start, end, calendarId } = args;
+
+        const {
+          summary,
+          start,
+          end,
+          calendarId,
+          description,
+          location,
+          colorId,
+          attendees,
+          recurrence,
+        } = args;
+
         if (!summary || !start || !end)
           throw new Error("Missing required arguments");
+
         const result = await googleCalendarInstance.createEvent(
           summary,
           start,
           end,
-          calendarId
+          calendarId,
+          description,
+          location,
+          colorId,
+          attendees,
+          recurrence
         );
+
         return {
           content: [{ type: "text", text: result }],
           isError: false,
@@ -91,10 +114,105 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (!isGetEventsArgs(args)) {
           throw new Error("Invalid arguments for google_calendar_get_events");
         }
-        const { limit, calendarId } = args;
+        const { limit, calendarId, timeMin, timeMax, q, showDeleted } = args;
         const result = await googleCalendarInstance.getEvents(
           limit || 10,
+          calendarId,
+          timeMin,
+          timeMax,
+          q,
+          showDeleted
+        );
+        return {
+          content: [{ type: "text", text: result }],
+          isError: false,
+        };
+      }
+
+      case "google_calendar_get_event": {
+        if (!isGetEventArgs(args)) {
+          throw new Error("Invalid arguments for google_calendar_get_event");
+        }
+        const { eventId, calendarId } = args;
+        const result = await googleCalendarInstance.getEvent(
+          eventId,
           calendarId
+        );
+        return {
+          content: [{ type: "text", text: result }],
+          isError: false,
+        };
+      }
+
+      case "google_calendar_update_event": {
+        if (!isUpdateEventArgs(args)) {
+          throw new Error("Invalid arguments for google_calendar_update_event");
+        }
+
+        const {
+          eventId,
+          calendarId,
+          summary,
+          description,
+          start,
+          end,
+          location,
+          colorId,
+          attendees,
+          recurrence,
+        } = args;
+
+        const changes = {
+          summary,
+          description,
+          start,
+          end,
+          location,
+          colorId,
+          attendees,
+          recurrence,
+        };
+
+        const result = await googleCalendarInstance.updateEvent(
+          eventId,
+          changes,
+          calendarId
+        );
+        return {
+          content: [{ type: "text", text: result }],
+          isError: false,
+        };
+      }
+
+      case "google_calendar_delete_event": {
+        if (!isDeleteEventArgs(args)) {
+          throw new Error("Invalid arguments for google_calendar_delete_event");
+        }
+
+        const { eventId, calendarId } = args;
+        const result = await googleCalendarInstance.deleteEvent(
+          eventId,
+          calendarId
+        );
+        return {
+          content: [{ type: "text", text: result }],
+          isError: false,
+        };
+      }
+
+      case "google_calendar_find_free_time": {
+        if (!isFindFreeTimeArgs(args)) {
+          throw new Error(
+            "Invalid arguments for google_calendar_find_free_time"
+          );
+        }
+
+        const { startDate, endDate, duration, calendarIds } = args;
+        const result = await googleCalendarInstance.findFreeTime(
+          startDate,
+          endDate,
+          duration,
+          calendarIds
         );
         return {
           content: [{ type: "text", text: result }],
