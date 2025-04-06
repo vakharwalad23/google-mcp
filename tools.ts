@@ -288,6 +288,26 @@ export const GET_EMAIL_TOOL: Tool = {
   },
 };
 
+export const GET_EMAIL_BY_INDEX_TOOL: Tool = {
+  name: "google_gmail_get_email_by_index",
+  description: "Get email by its index from the most recent search results",
+  inputSchema: {
+    type: "object",
+    properties: {
+      index: {
+        type: "number",
+        description: "Index of the email from search results (starting from 1)",
+      },
+      format: {
+        type: "string",
+        description:
+          "Format to return the email in (full, metadata, minimal, raw)",
+      },
+    },
+    required: ["index"],
+  },
+};
+
 export const SEND_EMAIL_TOOL: Tool = {
   name: "google_gmail_send_email",
   description: "Send a new email",
@@ -423,6 +443,7 @@ const tools = [
   LIST_LABELS_TOOL,
   LIST_EMAILS_TOOL,
   GET_EMAIL_TOOL,
+  GET_EMAIL_BY_INDEX_TOOL,
   SEND_EMAIL_TOOL,
   DRAFT_EMAIL_TOOL,
   DELETE_EMAIL_TOOL,

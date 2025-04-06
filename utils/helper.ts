@@ -147,6 +147,17 @@ export function isGetEmailArgs(args: any): args is {
   );
 }
 
+export function isGetEmailByIndexArgs(args: any): args is {
+  index: number;
+  format?: string;
+} {
+  return (
+    args &&
+    typeof args.index === "number" &&
+    (args.format === undefined || typeof args.format === "string")
+  );
+}
+
 export function isSendEmailArgs(args: any): args is {
   to: string[];
   subject: string;

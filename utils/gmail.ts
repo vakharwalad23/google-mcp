@@ -2,6 +2,7 @@ import { google } from "googleapis";
 
 export default class GoogleGmail {
   private gmail: any;
+  private recentEmails: { id: string; subject: string }[] = [];
 
   constructor(authClient: any) {
     this.gmail = google.gmail({ version: "v1", auth: authClient });
@@ -41,11 +42,14 @@ export default class GoogleGmail {
       });
 
       if (!response.data.messages || response.data.messages.length === 0) {
+        this.recentEmails = [];
         return "No messages found.";
       }
 
       // Get details for each message
       const results = [];
+      this.recentEmails = []; // Clear previous results
+
       for (const message of response.data.messages) {
         const msgDetails = await this.gmail.users.messages.get({
           userId: "me",
@@ -61,6 +65,12 @@ export default class GoogleGmail {
         const from = headers.find((h: any) => h.name === "From")?.value || "";
         const date = headers.find((h: any) => h.name === "Date")?.value || "";
 
+        // Store message data for reference
+        this.recentEmails.push({
+          id: message.id,
+          subject: subject,
+        });
+
         results.push({
           id: message.id,
           subject,
@@ -70,11 +80,13 @@ export default class GoogleGmail {
         });
       }
 
-      // Format results
+      // Format results with index numbers
       return results
         .map(
-          (msg) =>
-            `ID: ${msg.id}\nFrom: ${msg.from}\nDate: ${msg.date}\nSubject: ${msg.subject}\nSnippet: ${msg.snippet}`
+          (msg, index) =>
+            `[${index + 1}] ID: ${msg.id}\nFrom: ${msg.from}\nDate: ${
+              msg.date
+            }\nSubject: ${msg.subject}\nSnippet: ${msg.snippet}`
         )
         .join("\n\n---\n\n");
     } catch (error) {
@@ -84,6 +96,15 @@ export default class GoogleGmail {
         }`
       );
     }
+  }
+
+  getMessageIdByIndex(index: number): string {
+    if (index < 1 || index > this.recentEmails.length) {
+      throw new Error(
+        `Invalid email index: ${index}. Available range: 1-${this.recentEmails.length}`
+      );
+    }
+    return this.recentEmails[index - 1].id;
   }
 
   async getEmail(messageId: string, format: string = "full") {

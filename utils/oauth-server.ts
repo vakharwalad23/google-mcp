@@ -45,6 +45,8 @@ export async function startOAuthServer(): Promise<void> {
 
           // Close the server and resolve the promise
           server.close(() => {
+            if (timeoutId) clearTimeout(timeoutId);
+            serverClosed = true;
             resolve();
           });
         } else {
@@ -57,6 +59,8 @@ export async function startOAuthServer(): Promise<void> {
             </body></html>
           `);
           server.close(() => {
+            if (timeoutId) clearTimeout(timeoutId);
+            serverClosed = true;
             reject(new Error("No authorization code received"));
           });
         }
@@ -70,6 +74,8 @@ export async function startOAuthServer(): Promise<void> {
           </body></html>
         `);
         server.close(() => {
+          if (timeoutId) clearTimeout(timeoutId);
+          serverClosed = true;
           reject(error);
         });
       }
@@ -80,13 +86,16 @@ export async function startOAuthServer(): Promise<void> {
 
     // Handle server errors
     server.on("error", (err) => {
+      if (timeoutId) clearTimeout(timeoutId);
       reject(err);
     });
     // Setting a timeout to close the server after 5 minutes
     timeoutId = setTimeout(() => {
       if (!serverClosed) {
         serverClosed = true;
-        server.close();
+        server.close(() => {
+          reject(new Error("OAuth authentication timed out after 3 minutes"));
+        });
         reject(new Error("OAuth authentication timed out after 5 minutes"));
       }
     }, 3 * 60 * 1000);

@@ -27,6 +27,7 @@ import {
   isDraftEmailArgs,
   isDeleteEmailArgs,
   isModifyLabelsArgs,
+  isGetEmailByIndexArgs,
 } from "./utils/helper";
 
 let googleCalendarInstance: GoogleCalendar;
@@ -279,6 +280,35 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           content: [{ type: "text", text: result }],
           isError: false,
         };
+      }
+
+      case "google_gmail_get_email_by_index": {
+        if (!isGetEmailByIndexArgs(args)) {
+          throw new Error(
+            "Invalid arguments for google_gmail_get_email_by_index"
+          );
+        }
+        const { index, format } = args;
+        try {
+          const messageId = googleGmailInstance.getMessageIdByIndex(index);
+          const result = await googleGmailInstance.getEmail(messageId, format);
+          return {
+            content: [{ type: "text", text: result }],
+            isError: false,
+          };
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Error: ${
+                  error instanceof Error ? error.message : String(error)
+                }`,
+              },
+            ],
+            isError: true,
+          };
+        }
       }
 
       case "google_gmail_send_email": {
