@@ -1,4 +1,4 @@
-// Validation functions for Google Tools arguments
+// Validation functions for Google Tools arguments.. Just necessary thing
 
 export function isSetDefaultCalendarArgs(
   args: any
@@ -115,5 +115,88 @@ export function isFindFreeTimeArgs(args: any): args is {
     typeof args.endDate === "string" &&
     typeof args.duration === "number" &&
     (args.calendarIds === undefined || Array.isArray(args.calendarIds))
+  );
+}
+
+// Gmail validation functions
+export function isListLabelsArgs(args: any): args is Record<string, never> {
+  return args && Object.keys(args).length === 0;
+}
+
+export function isListEmailsArgs(args: any): args is {
+  labelIds?: string[];
+  maxResults?: number;
+  query?: string;
+} {
+  return (
+    args &&
+    (args.labelIds === undefined || Array.isArray(args.labelIds)) &&
+    (args.maxResults === undefined || typeof args.maxResults === "number") &&
+    (args.query === undefined || typeof args.query === "string")
+  );
+}
+
+export function isGetEmailArgs(args: any): args is {
+  messageId: string;
+  format?: string;
+} {
+  return (
+    args &&
+    typeof args.messageId === "string" &&
+    (args.format === undefined || typeof args.format === "string")
+  );
+}
+
+export function isSendEmailArgs(args: any): args is {
+  to: string[];
+  subject: string;
+  body: string;
+  cc?: string[];
+  bcc?: string[];
+  isHtml?: boolean;
+} {
+  return (
+    args &&
+    Array.isArray(args.to) &&
+    typeof args.subject === "string" &&
+    typeof args.body === "string" &&
+    (args.cc === undefined || Array.isArray(args.cc)) &&
+    (args.bcc === undefined || Array.isArray(args.bcc)) &&
+    (args.isHtml === undefined || typeof args.isHtml === "boolean")
+  );
+}
+
+export function isDraftEmailArgs(args: any): args is {
+  to: string[];
+  subject: string;
+  body: string;
+  cc?: string[];
+  bcc?: string[];
+  isHtml?: boolean;
+} {
+  return isSendEmailArgs(args); // Same validation as sendEmail
+}
+
+export function isDeleteEmailArgs(args: any): args is {
+  messageId: string;
+  permanently?: boolean;
+} {
+  return (
+    args &&
+    typeof args.messageId === "string" &&
+    (args.permanently === undefined || typeof args.permanently === "boolean")
+  );
+}
+
+export function isModifyLabelsArgs(args: any): args is {
+  messageId: string;
+  addLabelIds?: string[];
+  removeLabelIds?: string[];
+} {
+  return (
+    args &&
+    typeof args.messageId === "string" &&
+    (args.addLabelIds === undefined || Array.isArray(args.addLabelIds)) &&
+    (args.removeLabelIds === undefined || Array.isArray(args.removeLabelIds))
   );
 }

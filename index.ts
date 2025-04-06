@@ -6,9 +6,11 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import GoogleCalendar from "./utils/calendar";
+import GoogleGmail from "./utils/gmail";
 import tools from "./tools";
 import { createAuthClient } from "./utils/auth";
 import {
+  // Calendar validators
   isCreateEventArgs,
   isGetEventsArgs,
   isSetDefaultCalendarArgs,
@@ -17,10 +19,19 @@ import {
   isUpdateEventArgs,
   isDeleteEventArgs,
   isFindFreeTimeArgs,
+  // Gmail validators
+  isListLabelsArgs,
+  isListEmailsArgs,
+  isGetEmailArgs,
+  isSendEmailArgs,
+  isDraftEmailArgs,
+  isDeleteEmailArgs,
+  isModifyLabelsArgs,
 } from "./utils/helper";
 
 const authClient = createAuthClient();
 const googleCalendarInstance = new GoogleCalendar(authClient);
+const googleGmailInstance = new GoogleGmail(authClient);
 
 // Initialize the MCP server
 const server = new Server(
@@ -40,6 +51,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     if (!args) throw new Error("No arguments provided");
 
     switch (name) {
+      // Calendar tools handlers
       case "google_calendar_set_default": {
         if (!isSetDefaultCalendarArgs(args)) {
           throw new Error("Invalid arguments for google_calendar_set_default");
@@ -213,6 +225,120 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           endDate,
           duration,
           calendarIds
+        );
+        return {
+          content: [{ type: "text", text: result }],
+          isError: false,
+        };
+      }
+
+      // Gmail tools handlers
+      case "google_gmail_list_labels": {
+        if (!isListLabelsArgs(args)) {
+          throw new Error("Invalid arguments for google_gmail_list_labels");
+        }
+        const labels = await googleGmailInstance.listLabels();
+        const formattedResult = labels
+          .map(
+            (label: any) => `${label.name} - ID: ${label.id} (${label.type})`
+          )
+          .join("\n");
+        return {
+          content: [{ type: "text", text: formattedResult }],
+          isError: false,
+        };
+      }
+
+      case "google_gmail_list_emails": {
+        if (!isListEmailsArgs(args)) {
+          throw new Error("Invalid arguments for google_gmail_list_emails");
+        }
+        const { labelIds, maxResults, query } = args;
+        const result = await googleGmailInstance.listEmails(
+          labelIds,
+          maxResults,
+          query
+        );
+        return {
+          content: [{ type: "text", text: result }],
+          isError: false,
+        };
+      }
+
+      case "google_gmail_get_email": {
+        if (!isGetEmailArgs(args)) {
+          throw new Error("Invalid arguments for google_gmail_get_email");
+        }
+        const { messageId, format } = args;
+        const result = await googleGmailInstance.getEmail(messageId, format);
+        return {
+          content: [{ type: "text", text: result }],
+          isError: false,
+        };
+      }
+
+      case "google_gmail_send_email": {
+        if (!isSendEmailArgs(args)) {
+          throw new Error("Invalid arguments for google_gmail_send_email");
+        }
+        const { to, subject, body, cc, bcc, isHtml } = args;
+        const result = await googleGmailInstance.sendEmail(
+          to,
+          subject,
+          body,
+          cc,
+          bcc,
+          isHtml
+        );
+        return {
+          content: [{ type: "text", text: result }],
+          isError: false,
+        };
+      }
+
+      case "google_gmail_draft_email": {
+        if (!isDraftEmailArgs(args)) {
+          throw new Error("Invalid arguments for google_gmail_draft_email");
+        }
+        const { to, subject, body, cc, bcc, isHtml } = args;
+        const result = await googleGmailInstance.draftEmail(
+          to,
+          subject,
+          body,
+          cc,
+          bcc,
+          isHtml
+        );
+        return {
+          content: [{ type: "text", text: result }],
+          isError: false,
+        };
+      }
+
+      case "google_gmail_delete_email": {
+        if (!isDeleteEmailArgs(args)) {
+          throw new Error("Invalid arguments for google_gmail_delete_email");
+        }
+        const { messageId, permanently } = args;
+        const result = await googleGmailInstance.deleteEmail(
+          messageId,
+          permanently
+        );
+        return {
+          content: [{ type: "text", text: result }],
+          isError: false,
+        };
+      }
+
+      case "google_gmail_modify_labels": {
+        if (!isModifyLabelsArgs(args)) {
+          throw new Error("Invalid arguments for google_gmail_modify_labels");
+        }
+        const { messageId, addLabelIds, removeLabelIds } = args;
+        const result = await googleGmailInstance.modifyLabels(
+          messageId,
+          addLabelIds,
+          removeLabelIds
         );
         return {
           content: [{ type: "text", text: result }],

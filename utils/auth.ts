@@ -2,7 +2,10 @@ import { google } from "googleapis";
 import * as fs from "fs";
 import * as path from "path";
 
-export function createAuthClient(credentials?: string | object): any {
+export function createAuthClient(
+  credentials?: string | object,
+  userToImpersonate?: string
+): any {
   let creds: any;
 
   // Case 1: Credentials provided as a string (file path)
@@ -45,13 +48,20 @@ export function createAuthClient(credentials?: string | object): any {
       "Invalid credentials: client_email and private_key are required."
     );
   }
+
+  // For Gmail operations, we need to impersonate a user
+  const impersonatedUser =
+    userToImpersonate || process.env.GMAIL_USER_TO_IMPERSONATE;
+
   return new google.auth.JWT({
     email: client_email,
     key: private_key,
     scopes: [
       "https://www.googleapis.com/auth/drive",
       "https://www.googleapis.com/auth/gmail.modify",
+      "https://www.googleapis.com/auth/gmail.readonly",
       "https://www.googleapis.com/auth/calendar",
     ],
+    subject: impersonatedUser,
   });
 }
