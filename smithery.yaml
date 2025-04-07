@@ -1,0 +1,48 @@
+# Smithery configuration file: https://smithery.ai/docs/config#smitheryyaml
+
+startCommand:
+  type: stdio
+  configSchema:
+    # JSON Schema defining the configuration options for the MCP.
+    type: object
+    required: []
+    properties:
+      GOOGLE_OAUTH_CLIENT_ID:
+        type: string
+        default: ""
+        description: Google OAuth Client ID
+      GOOGLE_OAUTH_CLIENT_SECRET:
+        type: string
+        default: ""
+        description: Google OAuth Client Secret
+      GOOGLE_OAUTH_TOKEN_PATH:
+        type: string
+        default: ./token.json
+        description: Path to store OAuth tokens
+      GOOGLE_CLIENT_EMAIL:
+        type: string
+        default: ""
+        description: Service account email
+      GOOGLE_PRIVATE_KEY:
+        type: string
+        default: ""
+        description: Service account private key
+      GMAIL_USER_TO_IMPERSONATE:
+        type: string
+        default: ""
+        description: Gmail user to impersonate
+  commandFunction:
+    # A JS function that produces the CLI command based on the given config to start the MCP on stdio.
+    |-
+    (config) => ({
+      command: 'bun',
+      args: ['run', 'index.ts'],
+      env: config
+    })
+  exampleConfig:
+    GOOGLE_OAUTH_CLIENT_ID: dummy-client-id
+    GOOGLE_OAUTH_CLIENT_SECRET: dummy-client-secret
+    GOOGLE_OAUTH_TOKEN_PATH: ./token.json
+    GOOGLE_CLIENT_EMAIL: dummy@serviceaccount.com
+    GOOGLE_PRIVATE_KEY: dummy-private-key
+    GMAIL_USER_TO_IMPERSONATE: user@example.com
