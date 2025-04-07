@@ -5,7 +5,12 @@ startCommand:
   configSchema:
     # JSON Schema defining the configuration options for the MCP.
     type: object
-    required: []
+    required:
+      [
+        "GOOGLE_OAUTH_CLIENT_ID",
+        "GOOGLE_OAUTH_CLIENT_SECRET",
+        "GOOGLE_OAUTH_TOKEN_PATH",
+      ]
     properties:
       GOOGLE_OAUTH_CLIENT_ID:
         type: string
