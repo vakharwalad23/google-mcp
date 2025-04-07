@@ -10,7 +10,7 @@ This is a collection of Google-native tools (e.g., Gmail, Calendar) for the [MCP
   "mcpServers": {
     "google-mcp": {
       "command": "bunx",
-      "args": ["--no-cache", "@dav23/google-mcp@latest"],
+      "args": ["--no-cache", "google-mcp@latest"],
       "env": {
         // Either can be used, but not both
         // Use OAuth
@@ -74,7 +74,7 @@ You can chain commands for workflows, e.g.:
   "mcpServers": {
     "google-mcp": {
       "command": "bunx",
-      "args": ["--no-cache", "@dav23/google-mcp@latest"],
+      "args": ["--no-cache", "google-mcp@latest"],
       "env": {
         // Either can be used, but not both
         // Use OAuth
