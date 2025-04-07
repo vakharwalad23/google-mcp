@@ -1,0 +1,47 @@
+# Smithery configuration file: https://smithery.ai/docs/config#smitheryyaml
+
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    required:
+      [
+        "GOOGLE_OAUTH_CLIENT_ID",
+        "GOOGLE_OAUTH_CLIENT_SECRET",
+        "GOOGLE_OAUTH_TOKEN_PATH",
+      ]
+    properties:
+      GOOGLE_OAUTH_CLIENT_ID:
+        type: string
+        description: Google OAuth Client ID
+      GOOGLE_OAUTH_CLIENT_SECRET:
+        type: string
+        description: Google OAuth Client Secret
+      GOOGLE_OAUTH_TOKEN_PATH:
+        type: string
+        description: Path to store OAuth tokens
+      GOOGLE_CLIENT_EMAIL:
+        type: string
+        description: Service Account Email (alternative to OAuth)
+      GOOGLE_PRIVATE_KEY:
+        type: string
+        description: Service Account Private Key (alternative to OAuth)
+      GMAIL_USER_TO_IMPERSONATE:
+        type: string
+        description: User email to impersonate with Service Account
+    description: Configuration for Google MCP server authentication
+
+  commandFunction: |-
+    config => {
+      const envConfig = {};
+      // Only add non-empty environment variables
+      Object.entries(config).forEach(([key, value]) => {
+        if (value) envConfig[key] = value;
+      });
+      
+      return {
+        command: 'bun',
+        args: ['run', 'index.ts'],
+        env: envConfig
+      };
+    }
