@@ -1,5 +1,7 @@
 # Google MCP Tools
 
+[![smithery badge](https://smithery.ai/badge/@vakharwalad23/google-mcp)](https://smithery.ai/server/@vakharwalad23/google-mcp)
+
 This is a collection of Google-native tools (e.g., Gmail, Calendar) for the [MCP protocol](https://modelcontextprotocol.com/docs/mcp-protocol), designed to integrate seamlessly with AI clients like Claude or Cursor.
 
 <details>
@@ -51,6 +53,14 @@ This is a collection of Google-native tools (e.g., Gmail, Calendar) for the [MCP
 You can chain commands for workflows, e.g.:
 
 "List my unread emails, draft a reply to the latest one, and schedule a follow-up meeting tomorrow at 2 PM."
+
+### Installing via Smithery
+
+To install Google MCP Tools for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@vakharwalad23/google-mcp):
+
+```bash
+npx -y @smithery/cli install @vakharwalad23/google-mcp --client claude
+```
 
 ### Manual Installation
 
