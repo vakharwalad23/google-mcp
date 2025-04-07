@@ -3,6 +3,7 @@
 startCommand:
   type: stdio
   configSchema:
+    # JSON Schema defining the configuration options for the MCP.
     type: object
     required:
       [
@@ -13,34 +14,40 @@ startCommand:
     properties:
       GOOGLE_OAUTH_CLIENT_ID:
         type: string
+        default: ""
         description: Google OAuth Client ID
       GOOGLE_OAUTH_CLIENT_SECRET:
         type: string
+        default: ""
         description: Google OAuth Client Secret
       GOOGLE_OAUTH_TOKEN_PATH:
         type: string
+        default: ./token.json
         description: Path to store OAuth tokens
       GOOGLE_CLIENT_EMAIL:
         type: string
-        description: Service Account Email (alternative to OAuth)
+        default: ""
+        description: Service account email
       GOOGLE_PRIVATE_KEY:
         type: string
-        description: Service Account Private Key (alternative to OAuth)
+        default: ""
+        description: Service account private key
       GMAIL_USER_TO_IMPERSONATE:
         type: string
-        description: User email to impersonate with Service Account
-    description: Configuration for Google MCP server authentication
-
-  commandFunction: |-
-    config => ({
+        default: ""
+        description: Gmail user to impersonate
+  commandFunction:
+    # A JS function that produces the CLI command based on the given config to start the MCP on stdio.
+    |-
+    (config) => ({
       command: 'bun',
       args: ['run', 'index.ts'],
-      env: {
-        GOOGLE_OAUTH_CLIENT_ID: config.GOOGLE_OAUTH_CLIENT_ID,
-        GOOGLE_OAUTH_CLIENT_SECRET: config.GOOGLE_OAUTH_CLIENT_SECRET,
-        GOOGLE_OAUTH_TOKEN_PATH: config.GOOGLE_OAUTH_TOKEN_PATH,
-        GOOGLE_CLIENT_EMAIL: config.GOOGLE_CLIENT_EMAIL,
-        GOOGLE_PRIVATE_KEY: config.GOOGLE_PRIVATE_KEY,
-        GMAIL_USER_TO_IMPERSONATE: config.GMAIL_USER_TO_IMPERSONATE
-      }
+      env: config
     })
+  exampleConfig:
+    GOOGLE_OAUTH_CLIENT_ID: dummy-client-id
+    GOOGLE_OAUTH_CLIENT_SECRET: dummy-client-secret
+    GOOGLE_OAUTH_TOKEN_PATH: ./token.json
+    GOOGLE_CLIENT_EMAIL: dummy@serviceaccount.com
+    GOOGLE_PRIVATE_KEY: dummy-private-key
+    GMAIL_USER_TO_IMPERSONATE: user@example.com
