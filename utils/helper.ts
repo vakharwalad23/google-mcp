@@ -211,3 +211,184 @@ export function isModifyLabelsArgs(args: any): args is {
     (args.removeLabelIds === undefined || Array.isArray(args.removeLabelIds))
   );
 }
+
+// Google Drive validation functions
+export function isListFilesArgs(args: any): args is {
+  query?: string;
+  pageSize?: number;
+  orderBy?: string;
+  fields?: string;
+} {
+  return (
+    args &&
+    (args.query === undefined || typeof args.query === "string") &&
+    (args.pageSize === undefined || typeof args.pageSize === "number") &&
+    (args.orderBy === undefined || typeof args.orderBy === "string") &&
+    (args.fields === undefined || typeof args.fields === "string")
+  );
+}
+
+export function isGetFileContentArgs(args: any): args is {
+  fileId: string;
+} {
+  return args && typeof args.fileId === "string";
+}
+
+export function isCreateFileArgs(args: any): args is {
+  name: string;
+  content: string;
+  mimeType?: string;
+  folderId?: string;
+} {
+  return (
+    args &&
+    typeof args.name === "string" &&
+    typeof args.content === "string" &&
+    (args.mimeType === undefined || typeof args.mimeType === "string") &&
+    (args.folderId === undefined || typeof args.folderId === "string")
+  );
+}
+
+export function isUpdateFileArgs(args: any): args is {
+  fileId: string;
+  content: string;
+  mimeType?: string;
+} {
+  return (
+    args &&
+    typeof args.fileId === "string" &&
+    typeof args.content === "string" &&
+    (args.mimeType === undefined || typeof args.mimeType === "string")
+  );
+}
+
+export function isDeleteFileArgs(args: any): args is {
+  fileId: string;
+  permanently?: boolean;
+} {
+  return (
+    args &&
+    typeof args.fileId === "string" &&
+    (args.permanently === undefined || typeof args.permanently === "boolean")
+  );
+}
+
+export function isShareFileArgs(args: any): args is {
+  fileId: string;
+  emailAddress: string;
+  role?: string;
+  sendNotification?: boolean;
+  message?: string;
+} {
+  return (
+    args &&
+    typeof args.fileId === "string" &&
+    typeof args.emailAddress === "string" &&
+    (args.role === undefined || typeof args.role === "string") &&
+    (args.sendNotification === undefined ||
+      typeof args.sendNotification === "boolean") &&
+    (args.message === undefined || typeof args.message === "string")
+  );
+}
+
+// Google Tasks validation functions
+export function isSetDefaultTaskListArgs(args: any): args is {
+  taskListId: string;
+} {
+  return args && typeof args.taskListId === "string";
+}
+
+export function isListTaskListsArgs(args: any): args is Record<string, never> {
+  return args && Object.keys(args).length === 0;
+}
+
+export function isListTasksArgs(args: any): args is {
+  taskListId?: string;
+  showCompleted?: boolean;
+} {
+  return (
+    args &&
+    (args.taskListId === undefined || typeof args.taskListId === "string") &&
+    (args.showCompleted === undefined ||
+      typeof args.showCompleted === "boolean")
+  );
+}
+
+export function isGetTaskArgs(args: any): args is {
+  taskId: string;
+  taskListId?: string;
+} {
+  return (
+    args &&
+    typeof args.taskId === "string" &&
+    (args.taskListId === undefined || typeof args.taskListId === "string")
+  );
+}
+
+export function isCreateTaskArgs(args: any): args is {
+  title: string;
+  notes?: string;
+  due?: string;
+  taskListId?: string;
+} {
+  return (
+    args &&
+    typeof args.title === "string" &&
+    (args.notes === undefined || typeof args.notes === "string") &&
+    (args.due === undefined || typeof args.due === "string") &&
+    (args.taskListId === undefined || typeof args.taskListId === "string")
+  );
+}
+
+export function isUpdateTaskArgs(args: any): args is {
+  taskId: string;
+  title?: string;
+  notes?: string;
+  due?: string;
+  status?: string;
+  taskListId?: string;
+} {
+  return (
+    args &&
+    typeof args.taskId === "string" &&
+    (args.title === undefined || typeof args.title === "string") &&
+    (args.notes === undefined || typeof args.notes === "string") &&
+    (args.due === undefined || typeof args.due === "string") &&
+    (args.status === undefined || typeof args.status === "string") &&
+    (args.taskListId === undefined || typeof args.taskListId === "string")
+  );
+}
+
+export function isCompleteTaskArgs(args: any): args is {
+  taskId: string;
+  taskListId?: string;
+} {
+  return (
+    args &&
+    typeof args.taskId === "string" &&
+    (args.taskListId === undefined || typeof args.taskListId === "string")
+  );
+}
+
+export function isDeleteTaskArgs(args: any): args is {
+  taskId: string;
+  taskListId?: string;
+} {
+  return (
+    args &&
+    typeof args.taskId === "string" &&
+    (args.taskListId === undefined || typeof args.taskListId === "string")
+  );
+}
+
+export function isCreateTaskListArgs(args: any): args is {
+  title: string;
+} {
+  return args && typeof args.title === "string";
+}
+
+export function isDeleteTaskListArgs(args: any): args is {
+  taskListId: string;
+} {
+  return args && typeof args.taskListId === "string";
+}

@@ -66,8 +66,11 @@ You can chain commands for workflows, e.g.:
 
 2. Set Up OAuth:
 
-   - Create a Google Cloud project
+   - Create a Google Cloud project in the [Google Cloud Console](https://console.cloud.google.com/).
    - Set up OAuth 2.0 credentials (Client ID, Client Secret).
+   - Choose the type Desktop app.
+   - If using test mode, add your email to the test users list.
+   - Make sure to enable API access for desired services (Gmail, Calendar, Drive etc.).
 
 3. Configure Your Client: Edit your claude_desktop_config.json (or equivalent config file for your client):
 

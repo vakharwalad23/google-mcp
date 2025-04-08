@@ -7,6 +7,8 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import GoogleCalendar from "./utils/calendar";
 import GoogleGmail from "./utils/gmail";
+import GoogleDrive from "./utils/drive";
+import GoogleTasks from "./utils/tasks";
 import tools from "./tools";
 import { createAuthClient } from "./utils/auth";
 import {
@@ -28,10 +30,30 @@ import {
   isDeleteEmailArgs,
   isModifyLabelsArgs,
   isGetEmailByIndexArgs,
+  // Drive validators
+  isListFilesArgs,
+  isGetFileContentArgs,
+  isCreateFileArgs,
+  isUpdateFileArgs,
+  isDeleteFileArgs,
+  isShareFileArgs,
+  // Tasks validators
+  isSetDefaultTaskListArgs,
+  isListTaskListsArgs,
+  isListTasksArgs,
+  isGetTaskArgs,
+  isCreateTaskArgs,
+  isUpdateTaskArgs,
+  isCompleteTaskArgs,
+  isDeleteTaskArgs,
+  isCreateTaskListArgs,
+  isDeleteTaskListArgs,
 } from "./utils/helper";
 
 let googleCalendarInstance: GoogleCalendar;
 let googleGmailInstance: GoogleGmail;
+let googleDriveInstance: GoogleDrive;
+let googleTasksInstance: GoogleTasks;
 let initializationPromise: Promise<void>;
 
 // Initialize the MCP server
@@ -49,7 +71,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
     await initializationPromise;
-    if (!googleCalendarInstance || !googleGmailInstance) {
+    if (
+      !googleCalendarInstance ||
+      !googleGmailInstance ||
+      !googleDriveInstance ||
+      !googleTasksInstance
+    ) {
       throw new Error("Authentication failed to initialize services");
     }
     const { name, arguments: args } = request.params;
@@ -380,6 +407,241 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
+      // Google Drive tools handlers
+      case "google_drive_list_files": {
+        if (!isListFilesArgs(args)) {
+          throw new Error("Invalid arguments for google_drive_list_files");
+        }
+        const { query, pageSize, orderBy, fields } = args;
+        const result = await googleDriveInstance.listFiles(
+          query,
+          pageSize,
+          orderBy,
+          fields
+        );
+        return {
+          content: [{ type: "text", text: result }],
+          isError: false,
+        };
+      }
+
+      case "google_drive_get_file_content": {
+        if (!isGetFileContentArgs(args)) {
+          throw new Error(
+            "Invalid arguments for google_drive_get_file_content"
+          );
+        }
+        const { fileId } = args;
+        const result = await googleDriveInstance.getFileContent(fileId);
+        return {
+          content: [{ type: "text", text: result }],
+          isError: false,
+        };
+      }
+
+      case "google_drive_create_file": {
+        if (!isCreateFileArgs(args)) {
+          throw new Error("Invalid arguments for google_drive_create_file");
+        }
+        const { name, content, mimeType, folderId } = args;
+        const result = await googleDriveInstance.createFile(
+          name,
+          content,
+          mimeType,
+          folderId
+        );
+        return {
+          content: [{ type: "text", text: result }],
+          isError: false,
+        };
+      }
+
+      case "google_drive_update_file": {
+        if (!isUpdateFileArgs(args)) {
+          throw new Error("Invalid arguments for google_drive_update_file");
+        }
+        const { fileId, content, mimeType } = args;
+        const result = await googleDriveInstance.updateFile(
+          fileId,
+          content,
+          mimeType
+        );
+        return {
+          content: [{ type: "text", text: result }],
+          isError: false,
+        };
+      }
+
+      case "google_drive_delete_file": {
+        if (!isDeleteFileArgs(args)) {
+          throw new Error("Invalid arguments for google_drive_delete_file");
+        }
+        const { fileId, permanently } = args;
+        const result = await googleDriveInstance.deleteFile(
+          fileId,
+          permanently
+        );
+        return {
+          content: [{ type: "text", text: result }],
+          isError: false,
+        };
+      }
+
+      case "google_drive_share_file": {
+        if (!isShareFileArgs(args)) {
+          throw new Error("Invalid arguments for google_drive_share_file");
+        }
+        const { fileId, emailAddress, role, sendNotification, message } = args;
+        const result = await googleDriveInstance.shareFile(
+          fileId,
+          emailAddress,
+          role,
+          sendNotification,
+          message
+        );
+        return {
+          content: [{ type: "text", text: result }],
+          isError: false,
+        };
+      }
+
+      // Google Tasks tools handlers
+      case "google_tasks_set_default_list": {
+        if (!isSetDefaultTaskListArgs(args)) {
+          throw new Error(
+            "Invalid arguments for google_tasks_set_default_list"
+          );
+        }
+        const { taskListId } = args;
+        const result = googleTasksInstance.setDefaultTaskList(taskListId);
+        return {
+          content: [{ type: "text", text: result }],
+          isError: false,
+        };
+      }
+
+      case "google_tasks_list_tasklists": {
+        if (!isListTaskListsArgs(args)) {
+          throw new Error("Invalid arguments for google_tasks_list_tasklists");
+        }
+        const result = await googleTasksInstance.listTaskLists();
+        return {
+          content: [{ type: "text", text: result }],
+          isError: false,
+        };
+      }
+
+      case "google_tasks_list_tasks": {
+        if (!isListTasksArgs(args)) {
+          throw new Error("Invalid arguments for google_tasks_list_tasks");
+        }
+        const { taskListId, showCompleted } = args;
+        const result = await googleTasksInstance.listTasks(
+          taskListId,
+          showCompleted
+        );
+        return {
+          content: [{ type: "text", text: result }],
+          isError: false,
+        };
+      }
+
+      case "google_tasks_get_task": {
+        if (!isGetTaskArgs(args)) {
+          throw new Error("Invalid arguments for google_tasks_get_task");
+        }
+        const { taskId, taskListId } = args;
+        const result = await googleTasksInstance.getTask(taskId, taskListId);
+        return {
+          content: [{ type: "text", text: result }],
+          isError: false,
+        };
+      }
+
+      case "google_tasks_create_task": {
+        if (!isCreateTaskArgs(args)) {
+          throw new Error("Invalid arguments for google_tasks_create_task");
+        }
+        const { title, notes, due, taskListId } = args;
+        const result = await googleTasksInstance.createTask(
+          title,
+          notes,
+          due,
+          taskListId
+        );
+        return {
+          content: [{ type: "text", text: result }],
+          isError: false,
+        };
+      }
+
+      case "google_tasks_update_task": {
+        if (!isUpdateTaskArgs(args)) {
+          throw new Error("Invalid arguments for google_tasks_update_task");
+        }
+        const { taskId, title, notes, due, status, taskListId } = args;
+        const result = await googleTasksInstance.updateTask(
+          taskId,
+          { title, notes, due, status },
+          taskListId
+        );
+        return {
+          content: [{ type: "text", text: result }],
+          isError: false,
+        };
+      }
+
+      case "google_tasks_complete_task": {
+        if (!isCompleteTaskArgs(args)) {
+          throw new Error("Invalid arguments for google_tasks_complete_task");
+        }
+        const { taskId, taskListId } = args;
+        const result = await googleTasksInstance.completeTask(
+          taskId,
+          taskListId
+        );
+        return {
+          content: [{ type: "text", text: result }],
+          isError: false,
+        };
+      }
+
+      case "google_tasks_delete_task": {
+        if (!isDeleteTaskArgs(args)) {
+          throw new Error("Invalid arguments for google_tasks_delete_task");
+        }
+        const { taskId, taskListId } = args;
+        const result = await googleTasksInstance.deleteTask(taskId, taskListId);
+        return {
+          content: [{ type: "text", text: result }],
+          isError: false,
+        };
+      }
+
+      case "google_tasks_create_tasklist": {
+        if (!isCreateTaskListArgs(args)) {
+          throw new Error("Invalid arguments for google_tasks_create_tasklist");
+        }
+        const { title } = args;
+        const result = await googleTasksInstance.createTaskList(title);
+        return {
+          content: [{ type: "text", text: result }],
+          isError: false,
+        };
+      }
+
+      case "google_tasks_delete_tasklist": {
+        if (!isDeleteTaskListArgs(args)) {
+          throw new Error("Invalid arguments for google_tasks_delete_tasklist");
+        }
+        const { taskListId } = args;
+        const result = await googleTasksInstance.deleteTaskList(taskListId);
+        return {
+          content: [{ type: "text", text: result }],
+          isError: false,
+        };
+      }
+
       default:
         return {
           content: [{ type: "text", text: `Unknown tool: ${name}` }],
@@ -409,6 +671,8 @@ initializationPromise = createAuthClient()
   .then((authClient) => {
     googleCalendarInstance = new GoogleCalendar(authClient);
     googleGmailInstance = new GoogleGmail(authClient);
+    googleDriveInstance = new GoogleDrive(authClient);
+    googleTasksInstance = new GoogleTasks(authClient);
   })
   .catch((error) => {
     throw error; // This will reject the promise, and tool handlers will reflect the error

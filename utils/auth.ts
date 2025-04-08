@@ -6,18 +6,23 @@ import { startOAuthServer } from "./oauth-server";
 import open from "open";
 
 function saveTokensToFile(tokens: Credentials, tokenPath: string): void {
+  // Normalize the path to ensure proper handling on all platforms
+  const normalizedPath = path.normalize(tokenPath);
+
   // Ensure the directory exists
-  const dirname = path.dirname(tokenPath);
+  const dirname = path.dirname(normalizedPath);
   if (!fs.existsSync(dirname)) {
     fs.mkdirSync(dirname, { recursive: true });
   }
 
-  fs.writeFileSync(tokenPath, JSON.stringify(tokens));
+  fs.writeFileSync(normalizedPath, JSON.stringify(tokens));
 }
 
 function loadTokensFromFile(tokenPath: string): Credentials {
   try {
-    return JSON.parse(fs.readFileSync(tokenPath, "utf8"));
+    // Normalize the path
+    const normalizedPath = path.normalize(tokenPath);
+    return JSON.parse(fs.readFileSync(normalizedPath, "utf8"));
   } catch (err) {
     throw new Error(
       `Error loading token file: ${
@@ -30,7 +35,9 @@ function loadTokensFromFile(tokenPath: string): Credentials {
 export async function createAuthClient(): Promise<any> {
   const oauthClientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
   const oauthClientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
-  const oauthTokenPath = process.env.GOOGLE_OAUTH_TOKEN_PATH;
+  const oauthTokenPath = process.env.GOOGLE_OAUTH_TOKEN_PATH
+    ? path.normalize(process.env.GOOGLE_OAUTH_TOKEN_PATH)
+    : undefined;
   const redirectUri =
     process.env.GOOGLE_OAUTH_REDIRECT_URI || "http://localhost:3001";
 
@@ -71,6 +78,7 @@ export async function createAuthClient(): Promise<any> {
         "https://www.googleapis.com/auth/gmail.modify",
         "https://www.googleapis.com/auth/gmail.readonly",
         "https://www.googleapis.com/auth/calendar",
+        "https://www.googleapis.com/auth/tasks",
       ],
       subject: process.env.GMAIL_USER_TO_IMPERSONATE,
     });
@@ -118,6 +126,7 @@ export function generateOAuthConsentUrl(scopes?: string[]): string {
       "https://www.googleapis.com/auth/gmail.readonly",
       "https://www.googleapis.com/auth/drive",
       "https://www.googleapis.com/auth/calendar",
+      "https://www.googleapis.com/auth/tasks",
     ],
     prompt: "consent",
   });
