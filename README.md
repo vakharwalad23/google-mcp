@@ -45,8 +45,28 @@ This is a collection of Google-native tools (e.g., Gmail, Calendar) for the [MCP
   - List upcoming events with customizable filters.
   - Update or delete existing events.
   - Find free time slots for scheduling.
+- Drive:
+  - Filter with search queries
+  - Sort by modification date or other criteria
+  - Customize display count
+  - View detailed file metadata
+  - Read file content (text, docs, spreadsheets)
+  - Create new files with specified content
+  - Update existing files
+  - Delete files (trash or permanent)
+  - Share files with specific permissions
+- Tasks:
+  - View all task lists
+  - Create new task lists
+  - Delete existing task lists
+  - Set default task list
+  - List tasks with filters
+  - View task details
+  - Create tasks with title, notes, and due dates
+  - Update task properties
+  - Mark tasks as complete
+  - Delete tasks
 - TODO Plans:
-  - Google Drive: Upload, list, and search files.
   - Google Contacts: Search and manage contacts.
   - And Many More...
 
