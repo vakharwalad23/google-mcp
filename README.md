@@ -8,6 +8,10 @@
 
 This is a collection of Google-native tools (e.g., Gmail, Calendar) for the [MCP protocol](https://modelcontextprotocol.com/docs/mcp-protocol), designed to integrate seamlessly with AI clients like Claude or Cursor.
 
+<a href="https://glama.ai/mcp/servers/@vakharwalad23/google-mcp">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@vakharwalad23/google-mcp/badge" alt="Google MCP server" />
+</a>
+
 <details>
 <summary>JSON configs</summary>
 
