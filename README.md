@@ -2,10 +2,6 @@
 
 [![smithery badge](https://smithery.ai/badge/@vakharwalad23/google-mcp)](https://smithery.ai/server/@vakharwalad23/google-mcp)
 
-<a href="https://glama.ai/mcp/servers/@vakharwalad23/google-mcp">
-  <img width="380" height="200" src="https://glama.ai/mcp/servers/@vakharwalad23/google-mcp/badge" />
-</a>
-
 This is a collection of Google-native tools (e.g., Gmail, Calendar) for the [MCP protocol](https://modelcontextprotocol.com/docs/mcp-protocol), designed to integrate seamlessly with AI clients like Claude or Cursor.
 
 <a href="https://glama.ai/mcp/servers/@vakharwalad23/google-mcp">
