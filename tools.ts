@@ -784,9 +784,20 @@ export const REFRESH_TOKENS_TOOL: Tool = {
   },
 };
 
+export const REAUTHENTICATE_TOOL: Tool = {
+  name: "google_oauth_reauthenticate",
+  description:
+    "Delete existing tokens and start fresh OAuth authentication flow",
+  inputSchema: {
+    type: "object",
+    properties: {},
+  },
+};
+
 const tools = [
   // OAuth tools
   REFRESH_TOKENS_TOOL,
+  REAUTHENTICATE_TOOL,
 
   // Calendar tools
   SET_DEFAULT_CALENDAR_TOOL,

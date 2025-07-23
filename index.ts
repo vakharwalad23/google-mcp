@@ -10,10 +10,11 @@ import GoogleGmail from "./utils/gmail";
 import GoogleDrive from "./utils/drive";
 import GoogleTasks from "./utils/tasks";
 import tools from "./tools";
-import { createAuthClient, refreshTokens } from "./utils/auth";
+import { createAuthClient, refreshTokens, reauthenticate } from "./utils/auth";
 import {
   // OAuth validators
   isRefreshTokensArgs,
+  isReauthenticateArgs,
   // Calendar validators
   isCreateEventArgs,
   isGetEventsArgs,
@@ -105,6 +106,45 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             {
               type: "text",
               text: `Failed to refresh tokens: ${
+                error instanceof Error ? error.message : String(error)
+              }`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+
+    if (name === "google_oauth_reauthenticate") {
+      if (!isReauthenticateArgs(args)) {
+        throw new Error("Invalid arguments for google_oauth_reauthenticate");
+      }
+      try {
+        const result = await reauthenticate();
+
+        // Re-initialize services with new tokens
+        const authClient = await createAuthClient();
+        googleCalendarInstance = new GoogleCalendar(authClient);
+        googleGmailInstance = new GoogleGmail(authClient);
+        googleDriveInstance = new GoogleDrive(authClient);
+        googleTasksInstance = new GoogleTasks(authClient);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text:
+                result + "\nServices re-initialized with fresh authentication.",
+            },
+          ],
+          isError: false,
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Failed to re-authenticate: ${
                 error instanceof Error ? error.message : String(error)
               }`,
             },

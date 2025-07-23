@@ -41,6 +41,7 @@ This is a collection of Google-native tools (e.g., Gmail, Calendar) for the [MCP
 
   - Refresh expired access tokens automatically
   - Update tokens in the token file without re-authentication
+  - Complete re-authentication with automated token cleanup
   - Maintain session continuity across long-running operations
 
 - **Gmail**:
@@ -97,6 +98,7 @@ You can chain commands for workflows, e.g.:
 The server includes built-in OAuth token management to handle expired access tokens gracefully:
 
 - **Automatic Token Refresh**: When access tokens expire, you can refresh them without going through the full OAuth flow again
+- **Complete Re-authentication**: Automatically handle cases where refresh tokens are invalid or expired
 - **Persistent Storage**: Refreshed tokens are automatically saved to your configured token file path
 - **Session Continuity**: All Google services are re-initialized with fresh tokens after refresh
 
@@ -114,6 +116,24 @@ This will:
 2. Update the token file with the new credentials
 3. Re-initialize all Google services with fresh authentication
 4. Show you the new token expiration time
+
+### Complete Re-authentication
+
+If you get `invalid_grant` errors or your refresh token has expired, you can start fresh:
+
+```
+Re-authenticate my Google account
+```
+
+This automated process will:
+
+1. **Delete existing tokens** from your token file
+2. **Start OAuth server** to handle the callback
+3. **Open browser** for fresh authentication
+4. **Save new tokens** automatically
+5. **Re-initialize services** with fresh credentials
+
+You'll only need to click "Allow" in the browser - everything else is automated!
 
 **Note**: If you don't have a valid refresh token, you'll need to go through the initial OAuth authentication flow again.
 
@@ -180,6 +200,10 @@ Create a calendar event titled "Team Sync" tomorrow at 10 AM for 1 hour.
 
 ```
 Refresh my Google OAuth tokens
+```
+
+```
+Re-authenticate my Google account
 ```
 
 ## Local Development

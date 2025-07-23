@@ -212,3 +212,31 @@ export async function refreshTokens(): Promise<string> {
     );
   }
 }
+
+export async function reauthenticate(): Promise<string> {
+  const oauthTokenPath = process.env.GOOGLE_OAUTH_TOKEN_PATH
+    ? path.normalize(process.env.GOOGLE_OAUTH_TOKEN_PATH)
+    : undefined;
+
+  if (!oauthTokenPath) {
+    throw new Error("OAuth token path is required for re-authentication");
+  }
+
+  try {
+    // Delete existing token file if it exists
+    if (fs.existsSync(oauthTokenPath)) {
+      fs.unlinkSync(oauthTokenPath);
+    }
+
+    // Initiate fresh OAuth flow
+    await initiateOAuthFlow();
+
+    return "Re-authentication completed successfully. New tokens have been saved.";
+  } catch (error) {
+    throw new Error(
+      `Failed to re-authenticate: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
+  }
+}

@@ -397,3 +397,7 @@ export function isDeleteTaskListArgs(args: any): args is {
 export function isRefreshTokensArgs(args: any): args is Record<string, never> {
   return args && Object.keys(args).length === 0;
 }
+
+export function isReauthenticateArgs(args: any): args is Record<string, never> {
+  return args && Object.keys(args).length === 0;
+}
