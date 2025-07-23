@@ -10,8 +10,10 @@ import GoogleGmail from "./utils/gmail";
 import GoogleDrive from "./utils/drive";
 import GoogleTasks from "./utils/tasks";
 import tools from "./tools";
-import { createAuthClient } from "./utils/auth";
+import { createAuthClient, refreshTokens } from "./utils/auth";
 import {
+  // OAuth validators
+  isRefreshTokensArgs,
   // Calendar validators
   isCreateEventArgs,
   isGetEventsArgs,
@@ -70,6 +72,49 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
 // Handle the "call tool" request
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
+    const { name, arguments: args } = request.params;
+    if (!args) throw new Error("No arguments provided");
+
+    // Handle OAuth tools first (don't require initialization)
+    if (name === "google_oauth_refresh_tokens") {
+      if (!isRefreshTokensArgs(args)) {
+        throw new Error("Invalid arguments for google_oauth_refresh_tokens");
+      }
+      try {
+        const result = await refreshTokens();
+
+        // Re-initialize services with new tokens
+        const authClient = await createAuthClient();
+        googleCalendarInstance = new GoogleCalendar(authClient);
+        googleGmailInstance = new GoogleGmail(authClient);
+        googleDriveInstance = new GoogleDrive(authClient);
+        googleTasksInstance = new GoogleTasks(authClient);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: result + "\nServices re-initialized with refreshed tokens.",
+            },
+          ],
+          isError: false,
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Failed to refresh tokens: ${
+                error instanceof Error ? error.message : String(error)
+              }`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+
+    // For all other tools, ensure initialization is complete
     await initializationPromise;
     if (
       !googleCalendarInstance ||
@@ -79,8 +124,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     ) {
       throw new Error("Authentication failed to initialize services");
     }
-    const { name, arguments: args } = request.params;
-    if (!args) throw new Error("No arguments provided");
 
     switch (name) {
       // Calendar tools handlers

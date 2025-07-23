@@ -392,3 +392,8 @@ export function isDeleteTaskListArgs(args: any): args is {
 } {
   return args && typeof args.taskListId === "string";
 }
+
+// OAuth validation functions
+export function isRefreshTokensArgs(args: any): args is Record<string, never> {
+  return args && Object.keys(args).length === 0;
+}

@@ -37,19 +37,30 @@ This is a collection of Google-native tools (e.g., Gmail, Calendar) for the [MCP
 
 ## Features
 
-- Gmail:
+- **OAuth Management**:
+
+  - Refresh expired access tokens automatically
+  - Update tokens in the token file without re-authentication
+  - Maintain session continuity across long-running operations
+
+- **Gmail**:
+
   - Send emails with multiple recipients (to, cc, bcc) and attachments.
   - List emails with custom queries, labels, and result limits.
   - Read specific emails by ID.
   - Manage labels (add, remove, list).
   - Draft and delete emails.
-- Calendar:
+
+- **Calendar**:
+
   - List calendars and set a default calendar.
   - Create events with details (summary, start/end time, attendees, etc.).
   - List upcoming events with customizable filters.
   - Update or delete existing events.
   - Find free time slots for scheduling.
-- Drive:
+
+- **Drive**:
+
   - Filter with search queries
   - Sort by modification date or other criteria
   - Customize display count
@@ -59,7 +70,9 @@ This is a collection of Google-native tools (e.g., Gmail, Calendar) for the [MCP
   - Update existing files
   - Delete files (trash or permanent)
   - Share files with specific permissions
-- Tasks:
+
+- **Tasks**:
+
   - View all task lists
   - Create new task lists
   - Delete existing task lists
@@ -70,13 +83,39 @@ This is a collection of Google-native tools (e.g., Gmail, Calendar) for the [MCP
   - Update task properties
   - Mark tasks as complete
   - Delete tasks
-- TODO Plans:
+
+- **TODO Plans**:
   - Google Contacts: Search and manage contacts.
   - And Many More...
 
 You can chain commands for workflows, e.g.:
 
 "List my unread emails, draft a reply to the latest one, and schedule a follow-up meeting tomorrow at 2 PM."
+
+## OAuth Token Management
+
+The server includes built-in OAuth token management to handle expired access tokens gracefully:
+
+- **Automatic Token Refresh**: When access tokens expire, you can refresh them without going through the full OAuth flow again
+- **Persistent Storage**: Refreshed tokens are automatically saved to your configured token file path
+- **Session Continuity**: All Google services are re-initialized with fresh tokens after refresh
+
+### Refreshing Tokens
+
+If you encounter authentication errors or want to proactively refresh your tokens, simply ask:
+
+```
+Refresh my Google OAuth tokens
+```
+
+This will:
+
+1. Use your stored refresh token to get new access tokens
+2. Update the token file with the new credentials
+3. Re-initialize all Google services with fresh authentication
+4. Show you the new token expiration time
+
+**Note**: If you don't have a valid refresh token, you'll need to go through the initial OAuth authentication flow again.
 
 ### Manual Installation
 
@@ -137,6 +176,10 @@ List my upcoming calendar events for the next 3 days.
 
 ```
 Create a calendar event titled "Team Sync" tomorrow at 10 AM for 1 hour.
+```
+
+```
+Refresh my Google OAuth tokens
 ```
 
 ## Local Development

@@ -154,3 +154,61 @@ export async function handleOAuthCallback(code: string): Promise<void> {
   const { tokens } = await oauth2Client.getToken(code);
   saveTokensToFile(tokens, tokenPath);
 }
+
+export async function refreshTokens(): Promise<string> {
+  const oauthClientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
+  const oauthClientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
+  const oauthTokenPath = process.env.GOOGLE_OAUTH_TOKEN_PATH
+    ? path.normalize(process.env.GOOGLE_OAUTH_TOKEN_PATH)
+    : undefined;
+  const redirectUri =
+    process.env.GOOGLE_OAUTH_REDIRECT_URI || "http://localhost:3001";
+
+  if (!oauthClientId || !oauthClientSecret || !oauthTokenPath) {
+    throw new Error(
+      "OAuth client ID, secret, and token path are required for token refresh"
+    );
+  }
+
+  try {
+    // Load existing tokens
+    const currentTokens = loadTokensFromFile(oauthTokenPath);
+
+    if (!currentTokens.refresh_token) {
+      throw new Error("No refresh token available. Please re-authenticate.");
+    }
+
+    // Create OAuth2 client and set credentials
+    const oAuth2Client = new google.auth.OAuth2(
+      oauthClientId,
+      oauthClientSecret,
+      redirectUri
+    );
+
+    oAuth2Client.setCredentials(currentTokens);
+
+    // Refresh the access token
+    const { credentials } = await oAuth2Client.refreshAccessToken();
+
+    // Update tokens in file (preserve refresh_token if not returned)
+    const updatedTokens = {
+      ...currentTokens,
+      ...credentials,
+      refresh_token: credentials.refresh_token || currentTokens.refresh_token,
+    };
+
+    saveTokensToFile(updatedTokens, oauthTokenPath);
+
+    return `Tokens refreshed successfully. New expiry: ${
+      credentials.expiry_date
+        ? new Date(credentials.expiry_date).toLocaleString()
+        : "Unknown"
+    }`;
+  } catch (error) {
+    throw new Error(
+      `Failed to refresh tokens: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
+  }
+}
