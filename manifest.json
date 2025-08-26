@@ -1,0 +1,186 @@
+{
+  "dxt_version": "0.1",
+  "name": "google-mcp",
+  "display_name": "Google MCP Tools",
+  "version": "1.0.0",
+  "description": "A collection of Google-native tools (Gmail, Calendar, Drive, Tasks) for the MCP protocol",
+  "long_description": "This extension provides seamless integration with Google services including Gmail (send/read emails), Calendar (manage events), Drive (file operations), and Tasks (task management). Features OAuth management with automatic token refresh and complete re-authentication capabilities.",
+  "author": {
+    "name": "Dhruv Vakharwala",
+    "url": "https://github.com/vakharwalad23/google-mcp"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vakharwalad23/google-mcp"
+  },
+  "homepage": "https://github.com/vakharwalad23/google-mcp",
+  "documentation": "https://github.com/vakharwalad23/google-mcp#readme",
+  "support": "https://github.com/vakharwalad23/google-mcp/issues",
+  "license": "MIT",
+  "keywords": [
+    "google",
+    "gmail",
+    "calendar",
+    "drive",
+    "tasks",
+    "oauth",
+    "productivity"
+  ],
+  "server": {
+    "type": "node",
+    "entry_point": "dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/dist/index.js"],
+      "env": {
+        "GOOGLE_OAUTH_CLIENT_ID": "${user_config.oauth_client_id}",
+        "GOOGLE_OAUTH_CLIENT_SECRET": "${user_config.oauth_client_secret}",
+        "GOOGLE_OAUTH_TOKEN_PATH": "${user_config.token_path}"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "gmail_send",
+      "description": "Send emails with multiple recipients and attachments"
+    },
+    {
+      "name": "gmail_list",
+      "description": "List emails with custom queries and filters"
+    },
+    {
+      "name": "gmail_read",
+      "description": "Read specific emails by ID"
+    },
+    {
+      "name": "gmail_draft",
+      "description": "Create email drafts"
+    },
+    {
+      "name": "gmail_delete",
+      "description": "Delete emails"
+    },
+    {
+      "name": "gmail_labels_list",
+      "description": "List Gmail labels"
+    },
+    {
+      "name": "gmail_labels_add",
+      "description": "Add labels to emails"
+    },
+    {
+      "name": "gmail_labels_remove",
+      "description": "Remove labels from emails"
+    },
+    {
+      "name": "calendar_list",
+      "description": "List available calendars"
+    },
+    {
+      "name": "calendar_events_list",
+      "description": "List calendar events with filters"
+    },
+    {
+      "name": "calendar_events_create",
+      "description": "Create new calendar events"
+    },
+    {
+      "name": "calendar_events_update",
+      "description": "Update existing calendar events"
+    },
+    {
+      "name": "calendar_events_delete",
+      "description": "Delete calendar events"
+    },
+    {
+      "name": "calendar_freebusy",
+      "description": "Find free time slots for scheduling"
+    },
+    {
+      "name": "drive_list",
+      "description": "List Drive files with search and filters"
+    },
+    {
+      "name": "drive_read",
+      "description": "Read file content from Drive"
+    },
+    {
+      "name": "drive_create",
+      "description": "Create new files in Drive"
+    },
+    {
+      "name": "drive_update",
+      "description": "Update existing Drive files"
+    },
+    {
+      "name": "drive_delete",
+      "description": "Delete files from Drive"
+    },
+    {
+      "name": "drive_share",
+      "description": "Share Drive files with permissions"
+    },
+    {
+      "name": "tasks_lists_list",
+      "description": "List all task lists"
+    },
+    {
+      "name": "tasks_lists_create",
+      "description": "Create new task lists"
+    },
+    {
+      "name": "tasks_lists_delete",
+      "description": "Delete task lists"
+    },
+    {
+      "name": "tasks_list",
+      "description": "List tasks with filters"
+    },
+    {
+      "name": "tasks_create",
+      "description": "Create new tasks"
+    },
+    {
+      "name": "tasks_update",
+      "description": "Update existing tasks"
+    },
+    {
+      "name": "tasks_delete",
+      "description": "Delete tasks"
+    },
+    {
+      "name": "oauth_refresh",
+      "description": "Refresh OAuth tokens"
+    },
+    {
+      "name": "oauth_reauth",
+      "description": "Complete re-authentication"
+    }
+  ],
+  "user_config": {
+    "oauth_client_id": {
+      "type": "string",
+      "title": "OAuth Client ID",
+      "description": "Your Google OAuth Client ID",
+      "sensitive": true,
+      "required": true
+    },
+    "oauth_client_secret": {
+      "type": "string",
+      "title": "OAuth Client Secret",
+      "description": "Your Google OAuth Client Secret",
+      "sensitive": true,
+      "required": true
+    },
+    "token_path": {
+      "type": "string",
+      "title": "Token Storage Path",
+      "description": "Path to store OAuth tokens",
+      "default": "${HOME}/.google-mcp-tokens.json",
+      "required": true
+    }
+  },
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"]
+  }
+}

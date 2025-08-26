@@ -8,6 +8,14 @@ This is a collection of Google-native tools (e.g., Gmail, Calendar) for the [MCP
   <img width="380" height="200" src="https://glama.ai/mcp/servers/@vakharwalad23/google-mcp/badge" alt="Google MCP server" />
 </a>
 
+## Quick Install
+
+Click below for one-click install with `.dxt`:
+
+<a href="https://github.com/vakharwalad23/google-mcp/releases/download/v1.0.0/google-mcp.dxt">
+  <img width="280" alt="Install with Claude DXT" src="https://github.com/user-attachments/assets/dfcf4fe2-d94d-4b6b-86e4-2794fea74fff" />
+</a>
+
 <details>
 <summary>JSON configs</summary>
 
