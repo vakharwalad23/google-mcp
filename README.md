@@ -214,13 +214,75 @@ Refresh my Google OAuth tokens
 Re-authenticate my Google account
 ```
 
+## Transport Support
+
+This MCP server supports both stdio and HTTP transports via environment variables:
+
+### Stdio Transport (Default)
+
+```bash
+# Default mode - uses stdio transport
+bun run dev
+# Or explicitly
+MCP_TRANSPORT=stdio bun run index.ts
+```
+
+### HTTP Transport (Streamable HTTP)
+
+```bash
+# HTTP mode with Streamable HTTP support
+MCP_TRANSPORT=http bun run index.ts
+# Or with custom port
+MCP_TRANSPORT=http PORT=3000 bun run index.ts
+```
+
+When running in HTTP mode, the server provides these endpoints:
+
+- `GET /health` - Health check endpoint with session count
+- `GET /mcp` - Session info and server status
+- `POST /mcp` - Main MCP JSON-RPC endpoint for sending requests
+- `DELETE /mcp` - End session endpoint
+
+### Session Management
+
+The Streamable HTTP transport uses the official MCP SDK with automatic session management:
+
+1. **Automatic Sessions**: The server automatically generates secure session IDs
+2. **SSE Streaming**: Supports Server-Sent Events for real-time communication
+3. **JSON Responses**: Falls back to JSON responses when SSE is not available
+4. **DNS Protection**: Built-in security features for production deployment
+
+### Configuration for HTTP Transport
+
+For HTTP transport, configure your client with the server URL:
+
+```json
+{
+  "mcpServers": {
+    "google-mcp-http": {
+      "url": "http://localhost:3000/mcp",
+      "env": {
+        "GOOGLE_OAUTH_CLIENT_ID": "<YOUR_CLIENT_ID>",
+        "GOOGLE_OAUTH_CLIENT_SECRET": "<YOUR_CLIENT_SECRET>",
+        "GOOGLE_OAUTH_TOKEN_PATH": "<PATH_TO_STORE_TOKENS>"
+      }
+    }
+  }
+}
+```
+
 ## Local Development
 
 ```bash
 git clone https://github.com/vakharwalad23/google-mcp.git
 cd google-mcp
 bun install
-bun run index.ts
+
+# Run in stdio mode (default)
+bun run dev:stdio
+
+# Run in HTTP mode
+bun run dev:http
 ```
 
 Thank you for using Google MCP Tools! If you have any questions or suggestions, feel free to open an issue or contribute to the project.
