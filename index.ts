@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
-import { createGoogleMcpServer } from "./server-setup.js";
-import { createHttpTransport } from "./transports/http.js";
-import { createStdioTransport } from "./transports/stdio.js";
+import { createGoogleMcpServer } from "./server-setup";
+import { createHttpTransport } from "./transports/http";
+import { createStdioTransport } from "./transports/stdio";
 
 async function main() {
   // Create the MCP server instance
