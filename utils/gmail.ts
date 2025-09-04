@@ -1,11 +1,21 @@
 import { google } from "googleapis";
+import { FileUtils, type FileAttachment } from "./fileUtils";
+
+interface Attachment {
+  filePath?: string;
+  driveFileId?: string;
+  filename?: string;
+  mimeType?: string;
+}
 
 export default class GoogleGmail {
   private gmail: any;
+  private drive: any;
   private recentEmails: { id: string; subject: string }[] = [];
 
   constructor(authClient: any) {
     this.gmail = google.gmail({ version: "v1", auth: authClient });
+    this.drive = google.drive({ version: "v3", auth: authClient });
   }
 
   async listLabels() {
@@ -163,34 +173,186 @@ export default class GoogleGmail {
     }
   }
 
+  private async processAttachments(
+    attachments: Attachment[]
+  ): Promise<FileAttachment[]> {
+    const processedAttachments: FileAttachment[] = [];
+
+    for (const attachment of attachments) {
+      if (attachment.filePath) {
+        // Handle local file
+        FileUtils.validateFilePath(attachment.filePath);
+        const fileAttachment = await FileUtils.readFileAsBase64(
+          attachment.filePath,
+          attachment.filename
+        );
+
+        // Override MIME type if specified
+        if (attachment.mimeType) {
+          fileAttachment.mimeType = attachment.mimeType;
+        }
+
+        processedAttachments.push(fileAttachment);
+      } else if (attachment.driveFileId) {
+        // Handle Google Drive file
+        try {
+          // Get file metadata
+          const metadataResponse = await this.drive.files.get({
+            fileId: attachment.driveFileId,
+            fields: "name,mimeType,size",
+          });
+
+          const { name, mimeType, size } = metadataResponse.data;
+
+          // Check file size
+          if (size && parseInt(size) > 25 * 1024 * 1024) {
+            throw new Error(
+              `Drive file size (${FileUtils.formatFileSize(
+                parseInt(size)
+              )}) exceeds Gmail's 25MB attachment limit`
+            );
+          }
+
+          // Get file content
+          const fileResponse = await this.drive.files.get({
+            fileId: attachment.driveFileId,
+            alt: "media",
+          });
+
+          const base64Data = Buffer.from(fileResponse.data).toString("base64");
+
+          processedAttachments.push({
+            filename: attachment.filename || name,
+            mimeType:
+              attachment.mimeType || mimeType || "application/octet-stream",
+            data: base64Data,
+            size: size ? parseInt(size) : 0,
+          });
+        } catch (error) {
+          throw new Error(
+            `Failed to fetch Drive file ${attachment.driveFileId}: ${
+              error instanceof Error ? error.message : String(error)
+            }`
+          );
+        }
+      } else {
+        throw new Error(
+          "Invalid attachment: must provide either 'filePath' or 'driveFileId'"
+        );
+      }
+    }
+
+    return processedAttachments;
+  }
+
+  private async createMultipartEmail(
+    to: string[],
+    subject: string,
+    body: string,
+    cc?: string[],
+    bcc?: string[],
+    isHtml: boolean = false,
+    attachments?: FileAttachment[]
+  ): Promise<string> {
+    const boundary = "boundary_" + Math.random().toString(36).substr(2, 9);
+    const emailLines = [];
+
+    // Add headers
+    emailLines.push(`To: ${to.join(", ")}`);
+    if (cc && cc.length) {
+      emailLines.push(`Cc: ${cc.join(", ")}`);
+    }
+    if (bcc && bcc.length) {
+      emailLines.push(`Bcc: ${bcc.join(", ")}`);
+    }
+    emailLines.push(`Subject: ${subject}`);
+    emailLines.push(`MIME-Version: 1.0`);
+    emailLines.push(`Content-Type: multipart/mixed; boundary="${boundary}"`);
+    emailLines.push("");
+
+    // Add body part
+    emailLines.push(`--${boundary}`);
+    emailLines.push(
+      `Content-Type: ${isHtml ? "text/html" : "text/plain"}; charset=utf-8`
+    );
+    emailLines.push("");
+    emailLines.push(body);
+    emailLines.push("");
+
+    // Add attachments
+    if (attachments && attachments.length > 0) {
+      for (const attachment of attachments) {
+        emailLines.push(`--${boundary}`);
+        emailLines.push(`Content-Type: ${attachment.mimeType}`);
+        emailLines.push(`Content-Transfer-Encoding: base64`);
+        emailLines.push(
+          `Content-Disposition: attachment; filename="${attachment.filename}"`
+        );
+        emailLines.push("");
+
+        // Split base64 data into 76-character lines (RFC 2045)
+        const base64Lines = attachment.data.match(/.{1,76}/g) || [];
+        emailLines.push(...base64Lines);
+        emailLines.push("");
+      }
+    }
+
+    // Close the boundary
+    emailLines.push(`--${boundary}--`);
+
+    return emailLines.join("\r\n");
+  }
+
   async sendEmail(
     to: string[],
     subject: string,
     body: string,
     cc?: string[],
     bcc?: string[],
-    isHtml: boolean = false
+    isHtml: boolean = false,
+    attachments?: Attachment[]
   ) {
     try {
-      const emailLines = [];
+      let processedAttachments: FileAttachment[] = [];
 
-      // Add headers
-      emailLines.push(`To: ${to.join(", ")}`);
-      if (cc && cc.length) {
-        emailLines.push(`Cc: ${cc.join(", ")}`);
+      // Process attachments if provided
+      if (attachments && attachments.length > 0) {
+        processedAttachments = await this.processAttachments(attachments);
       }
-      if (bcc && bcc.length) {
-        emailLines.push(`Bcc: ${bcc.join(", ")}`);
+
+      let email: string;
+
+      if (processedAttachments.length > 0) {
+        // Use multipart email for attachments
+        email = await this.createMultipartEmail(
+          to,
+          subject,
+          body,
+          cc,
+          bcc,
+          isHtml,
+          processedAttachments
+        );
+      } else {
+        // Use simple email format for no attachments
+        const emailLines = [];
+        emailLines.push(`To: ${to.join(", ")}`);
+        if (cc && cc.length) {
+          emailLines.push(`Cc: ${cc.join(", ")}`);
+        }
+        if (bcc && bcc.length) {
+          emailLines.push(`Bcc: ${bcc.join(", ")}`);
+        }
+        emailLines.push(`Subject: ${subject}`);
+        emailLines.push(
+          `Content-Type: ${isHtml ? "text/html" : "text/plain"}; charset=utf-8`
+        );
+        emailLines.push("");
+        emailLines.push(body);
+        email = emailLines.join("\r\n");
       }
-      emailLines.push(`Subject: ${subject}`);
-      emailLines.push(
-        `Content-Type: ${isHtml ? "text/html" : "text/plain"}; charset=utf-8`
-      );
-      emailLines.push("");
-      emailLines.push(body);
 
       // Encode the email
-      const email = emailLines.join("\r\n");
       const encodedEmail = Buffer.from(email)
         .toString("base64")
         .replace(/\+/g, "-")
@@ -205,7 +367,18 @@ export default class GoogleGmail {
         },
       });
 
-      return `Email sent successfully. Message ID: ${res.data.id}`;
+      let result = `Email sent successfully. Message ID: ${res.data.id}`;
+      if (processedAttachments.length > 0) {
+        result += `\nAttachments: ${processedAttachments.length} file(s) attached`;
+        result += `\nAttachment details:`;
+        processedAttachments.forEach((att, index) => {
+          result += `\n  ${index + 1}. ${att.filename} (${
+            att.mimeType
+          }, ${FileUtils.formatFileSize(att.size)})`;
+        });
+      }
+
+      return result;
     } catch (error) {
       throw new Error(
         `Failed to send email: ${
@@ -221,28 +394,50 @@ export default class GoogleGmail {
     body: string,
     cc?: string[],
     bcc?: string[],
-    isHtml: boolean = false
+    isHtml: boolean = false,
+    attachments?: Attachment[]
   ) {
     try {
-      const emailLines = [];
+      let processedAttachments: FileAttachment[] = [];
 
-      // Add headers
-      emailLines.push(`To: ${to.join(", ")}`);
-      if (cc && cc.length) {
-        emailLines.push(`Cc: ${cc.join(", ")}`);
+      // Process attachments if provided
+      if (attachments && attachments.length > 0) {
+        processedAttachments = await this.processAttachments(attachments);
       }
-      if (bcc && bcc.length) {
-        emailLines.push(`Bcc: ${bcc.join(", ")}`);
+
+      let email: string;
+
+      if (processedAttachments.length > 0) {
+        // Use multipart email for attachments
+        email = await this.createMultipartEmail(
+          to,
+          subject,
+          body,
+          cc,
+          bcc,
+          isHtml,
+          processedAttachments
+        );
+      } else {
+        // Use simple email format for no attachments
+        const emailLines = [];
+        emailLines.push(`To: ${to.join(", ")}`);
+        if (cc && cc.length) {
+          emailLines.push(`Cc: ${cc.join(", ")}`);
+        }
+        if (bcc && bcc.length) {
+          emailLines.push(`Bcc: ${bcc.join(", ")}`);
+        }
+        emailLines.push(`Subject: ${subject}`);
+        emailLines.push(
+          `Content-Type: ${isHtml ? "text/html" : "text/plain"}; charset=utf-8`
+        );
+        emailLines.push("");
+        emailLines.push(body);
+        email = emailLines.join("\r\n");
       }
-      emailLines.push(`Subject: ${subject}`);
-      emailLines.push(
-        `Content-Type: ${isHtml ? "text/html" : "text/plain"}; charset=utf-8`
-      );
-      emailLines.push("");
-      emailLines.push(body);
 
       // Encode the email
-      const email = emailLines.join("\r\n");
       const encodedEmail = Buffer.from(email)
         .toString("base64")
         .replace(/\+/g, "-")
@@ -259,7 +454,18 @@ export default class GoogleGmail {
         },
       });
 
-      return `Draft created successfully. Draft ID: ${res.data.id}`;
+      let result = `Draft created successfully. Draft ID: ${res.data.id}`;
+      if (processedAttachments.length > 0) {
+        result += `\nAttachments: ${processedAttachments.length} file(s) attached`;
+        result += `\nAttachment details:`;
+        processedAttachments.forEach((att, index) => {
+          result += `\n  ${index + 1}. ${att.filename} (${
+            att.mimeType
+          }, ${FileUtils.formatFileSize(att.size)})`;
+        });
+      }
+
+      return result;
     } catch (error) {
       throw new Error(
         `Failed to create draft: ${

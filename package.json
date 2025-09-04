@@ -32,7 +32,8 @@
     "test": "bun test"
   },
   "devDependencies": {
-    "@types/bun": "^1.2.21"
+    "@types/bun": "^1.2.21",
+    "@types/mime-types": "^3.0.1"
   },
   "peerDependencies": {
     "typescript": "^5.9.2"
@@ -40,6 +41,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.4",
     "googleapis": "^159.0.0",
+    "mime-types": "^3.0.1",
     "open": "^10.2.0"
   }
 }

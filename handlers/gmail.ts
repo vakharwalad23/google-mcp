@@ -98,14 +98,15 @@ export async function handleGmailSendEmail(
   if (!isSendEmailArgs(args)) {
     throw new Error("Invalid arguments for google_gmail_send_email");
   }
-  const { to, subject, body, cc, bcc, isHtml } = args;
+  const { to, subject, body, cc, bcc, isHtml, attachments } = args;
   const result = await googleGmailInstance.sendEmail(
     to,
     subject,
     body,
     cc,
     bcc,
-    isHtml
+    isHtml,
+    attachments
   );
   return {
     content: [{ type: "text", text: result }],
@@ -120,14 +121,15 @@ export async function handleGmailDraftEmail(
   if (!isDraftEmailArgs(args)) {
     throw new Error("Invalid arguments for google_gmail_draft_email");
   }
-  const { to, subject, body, cc, bcc, isHtml } = args;
+  const { to, subject, body, cc, bcc, isHtml, attachments } = args;
   const result = await googleGmailInstance.draftEmail(
     to,
     subject,
     body,
     cc,
     bcc,
-    isHtml
+    isHtml,
+    attachments
   );
   return {
     content: [{ type: "text", text: result }],

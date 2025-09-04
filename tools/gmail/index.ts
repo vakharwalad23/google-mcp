@@ -105,6 +105,37 @@ export const SEND_EMAIL_TOOL: Tool = {
         type: "boolean",
         description: "Whether the body contains HTML",
       },
+      attachments: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            filePath: {
+              type: "string",
+              description:
+                "Local file path to attach (e.g., '/Users/username/Documents/file.pdf')",
+            },
+            driveFileId: {
+              type: "string",
+              description:
+                "Google Drive file ID to attach (alternative to filePath)",
+            },
+            filename: {
+              type: "string",
+              description:
+                "Custom filename for the attachment (optional, will use original filename if not provided)",
+            },
+            mimeType: {
+              type: "string",
+              description:
+                "MIME type of the attachment (optional, will be auto-detected)",
+            },
+          },
+          oneOf: [{ required: ["filePath"] }, { required: ["driveFileId"] }],
+        },
+        description:
+          "Array of attachments to include with the email. Provide either filePath for local files or driveFileId for Google Drive files.",
+      },
     },
     required: ["to", "subject", "body"],
   },
@@ -142,6 +173,37 @@ export const DRAFT_EMAIL_TOOL: Tool = {
       isHtml: {
         type: "boolean",
         description: "Whether the body contains HTML",
+      },
+      attachments: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            filePath: {
+              type: "string",
+              description:
+                "Local file path to attach (e.g., '/Users/username/Documents/file.pdf')",
+            },
+            driveFileId: {
+              type: "string",
+              description:
+                "Google Drive file ID to attach (alternative to filePath)",
+            },
+            filename: {
+              type: "string",
+              description:
+                "Custom filename for the attachment (optional, will use original filename if not provided)",
+            },
+            mimeType: {
+              type: "string",
+              description:
+                "MIME type of the attachment (optional, will be auto-detected)",
+            },
+          },
+          oneOf: [{ required: ["filePath"] }, { required: ["driveFileId"] }],
+        },
+        description:
+          "Array of attachments to include with the email. Provide either filePath for local files or driveFileId for Google Drive files.",
       },
     },
     required: ["to", "subject", "body"],

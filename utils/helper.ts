@@ -165,15 +165,22 @@ export function isSendEmailArgs(args: any): args is {
   cc?: string[];
   bcc?: string[];
   isHtml?: boolean;
+  attachments?: Array<{
+    filePath?: string;
+    driveFileId?: string;
+    filename?: string;
+    mimeType?: string;
+  }>;
 } {
   return (
-    args &&
+    typeof args === "object" &&
     Array.isArray(args.to) &&
     typeof args.subject === "string" &&
     typeof args.body === "string" &&
     (args.cc === undefined || Array.isArray(args.cc)) &&
     (args.bcc === undefined || Array.isArray(args.bcc)) &&
-    (args.isHtml === undefined || typeof args.isHtml === "boolean")
+    (args.isHtml === undefined || typeof args.isHtml === "boolean") &&
+    (args.attachments === undefined || Array.isArray(args.attachments))
   );
 }
 
@@ -184,8 +191,23 @@ export function isDraftEmailArgs(args: any): args is {
   cc?: string[];
   bcc?: string[];
   isHtml?: boolean;
+  attachments?: Array<{
+    filePath?: string;
+    driveFileId?: string;
+    filename?: string;
+    mimeType?: string;
+  }>;
 } {
-  return isSendEmailArgs(args); // Same validation as sendEmail
+  return (
+    typeof args === "object" &&
+    Array.isArray(args.to) &&
+    typeof args.subject === "string" &&
+    typeof args.body === "string" &&
+    (args.cc === undefined || Array.isArray(args.cc)) &&
+    (args.bcc === undefined || Array.isArray(args.bcc)) &&
+    (args.isHtml === undefined || typeof args.isHtml === "boolean") &&
+    (args.attachments === undefined || Array.isArray(args.attachments))
+  );
 }
 
 export function isDeleteEmailArgs(args: any): args is {
