@@ -1,7 +1,7 @@
 {
   "name": "google-mcp",
   "module": "index.ts",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "type": "module",
   "description": "Google MCP tools for calendar, drive, gmail etc...",
   "license": "MIT",
