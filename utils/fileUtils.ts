@@ -25,11 +25,30 @@ export class FileUtils {
     customFilename?: string
   ): Promise<FileAttachment> {
     try {
-      // Check if file exists
-      if (!fs.existsSync(filePath)) {
-        throw new Error(`File not found: ${filePath}`);
+      const normalizedPath = path.resolve(filePath.trim());
+
+      if (!fs.existsSync(normalizedPath)) {
+        if (!fs.existsSync(filePath)) {
+          throw new Error(`File not found: ${filePath}`);
+        }
+        return this.readFileAsBase64Internal(filePath, customFilename);
       }
 
+      return this.readFileAsBase64Internal(normalizedPath, customFilename);
+    } catch (error) {
+      throw new Error(
+        `Failed to read file ${filePath}: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+    }
+  }
+
+  private static readFileAsBase64Internal(
+    filePath: string,
+    customFilename?: string
+  ): FileAttachment {
+    try {
       // Get file stats
       const stats = fs.statSync(filePath);
 
@@ -61,7 +80,7 @@ export class FileUtils {
       };
     } catch (error) {
       throw new Error(
-        `Failed to read file ${filePath}: ${
+        `Failed to process file ${filePath}: ${
           error instanceof Error ? error.message : String(error)
         }`
       );
@@ -73,6 +92,10 @@ export class FileUtils {
     const normalizedPath = path.normalize(filePath);
     if (normalizedPath.includes("..")) {
       throw new Error("Invalid file path: directory traversal not allowed");
+    }
+
+    if (filePath.trim() === "") {
+      throw new Error("File path cannot be empty");
     }
   }
 
@@ -153,5 +176,42 @@ export class FileUtils {
   static sanitizeFilename(filename: string): string {
     // Remove or replace invalid characters for file names
     return filename.replace(/[<>:"/\\|?*\x00-\x1f]/g, "_");
+  }
+
+  static isValidFilePath(filePath: string): boolean {
+    try {
+      const normalizedPath = path.resolve(filePath.trim());
+      return (
+        fs.existsSync(normalizedPath) && fs.statSync(normalizedPath).isFile()
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  static getFileInfo(filePath: string): {
+    name: string;
+    size: number;
+    mimeType: string;
+  } {
+    try {
+      const normalizedPath = path.resolve(filePath.trim());
+      const stats = fs.statSync(normalizedPath);
+      const name = path.basename(normalizedPath);
+      const mimeType =
+        mime.lookup(normalizedPath) || "application/octet-stream";
+
+      return {
+        name,
+        size: stats.size,
+        mimeType,
+      };
+    } catch (error) {
+      throw new Error(
+        `Failed to get file info for ${filePath}: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+    }
   }
 }

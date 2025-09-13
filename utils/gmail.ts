@@ -197,66 +197,90 @@ export default class GoogleGmail {
   ): Promise<FileAttachment[]> {
     const processedAttachments: FileAttachment[] = [];
 
-    for (const attachment of attachments) {
-      if (attachment.filePath) {
-        // Handle local file
-        FileUtils.validateFilePath(attachment.filePath);
-        const fileAttachment = await FileUtils.readFileAsBase64(
-          attachment.filePath,
-          attachment.filename
-        );
+    for (let i = 0; i < attachments.length; i++) {
+      const attachment = attachments[i];
 
-        // Override MIME type if specified
-        if (attachment.mimeType) {
-          fileAttachment.mimeType = attachment.mimeType;
-        }
+      try {
+        if (attachment.filePath) {
+          FileUtils.validateFilePath(attachment.filePath);
 
-        processedAttachments.push(fileAttachment);
-      } else if (attachment.driveFileId) {
-        // Handle Google Drive file
-        try {
-          // Get file metadata
-          const metadataResponse = await this.drive.files.get({
-            fileId: attachment.driveFileId,
-            fields: "name,mimeType,size",
-          });
-
-          const { name, mimeType, size } = metadataResponse.data;
-
-          // Check file size
-          if (size && parseInt(size) > 25 * 1024 * 1024) {
+          if (!FileUtils.isValidFilePath(attachment.filePath)) {
             throw new Error(
-              `Drive file size (${FileUtils.formatFileSize(
-                parseInt(size)
-              )}) exceeds Gmail's 25MB attachment limit`
+              `File not found or not accessible: "${attachment.filePath}"`
             );
           }
 
-          // Get file content
-          const fileResponse = await this.drive.files.get({
-            fileId: attachment.driveFileId,
-            alt: "media",
-          });
+          const fileAttachment = await FileUtils.readFileAsBase64(
+            attachment.filePath,
+            attachment.filename
+          );
 
-          const base64Data = Buffer.from(fileResponse.data).toString("base64");
+          // Override MIME type if specified
+          if (attachment.mimeType) {
+            fileAttachment.mimeType = attachment.mimeType;
+          }
 
-          processedAttachments.push({
-            filename: attachment.filename || name,
-            mimeType:
-              attachment.mimeType || mimeType || "application/octet-stream",
-            data: base64Data,
-            size: size ? parseInt(size) : 0,
-          });
-        } catch (error) {
+          processedAttachments.push(fileAttachment);
+        } else if (attachment.driveFileId) {
+          try {
+            // Get file metadata
+            const metadataResponse = await this.drive.files.get({
+              fileId: attachment.driveFileId,
+              fields: "name,mimeType,size",
+            });
+
+            const { name, mimeType, size } = metadataResponse.data;
+
+            // Check file size
+            if (size && parseInt(size) > 25 * 1024 * 1024) {
+              throw new Error(
+                `Drive file size (${FileUtils.formatFileSize(
+                  parseInt(size)
+                )}) exceeds Gmail's 25MB attachment limit`
+              );
+            }
+
+            // Get file content with proper response type
+            const fileResponse = await this.drive.files.get(
+              {
+                fileId: attachment.driveFileId,
+                alt: "media",
+              },
+              {
+                responseType: "arraybuffer",
+              }
+            );
+
+            // Convert ArrayBuffer to base64
+            const buffer = Buffer.from(fileResponse.data as ArrayBuffer);
+            const base64Data = buffer.toString("base64");
+
+            processedAttachments.push({
+              filename: attachment.filename || name,
+              mimeType:
+                attachment.mimeType || mimeType || "application/octet-stream",
+              data: base64Data,
+              size: size ? parseInt(size) : 0,
+            });
+          } catch (error) {
+            throw new Error(
+              `Failed to fetch Drive file ${attachment.driveFileId}: ${
+                error instanceof Error ? error.message : String(error)
+              }`
+            );
+          }
+        } else {
           throw new Error(
-            `Failed to fetch Drive file ${attachment.driveFileId}: ${
-              error instanceof Error ? error.message : String(error)
-            }`
+            `Invalid attachment ${
+              i + 1
+            }: must provide either 'filePath' or 'driveFileId'`
           );
         }
-      } else {
+      } catch (error) {
         throw new Error(
-          "Invalid attachment: must provide either 'filePath' or 'driveFileId'"
+          `Attachment ${i + 1} error: ${
+            error instanceof Error ? error.message : String(error)
+          }`
         );
       }
     }
