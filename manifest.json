@@ -4,7 +4,7 @@
   "display_name": "Google MCP Tools",
   "version": "1.0.0",
   "description": "A collection of Google-native tools (Gmail, Calendar, Drive, Tasks) for the MCP protocol",
-  "long_description": "This extension provides seamless integration with Google services including Gmail (send/read emails), Calendar (manage events), Drive (file operations), and Tasks (task management). Features OAuth management with automatic token refresh and complete re-authentication capabilities.",
+  "long_description": "This extension provides seamless integration with Google services including Gmail (send/read emails, download attachments), Calendar (manage events), Drive (file operations), and Tasks (task management). Features OAuth management with automatic token refresh and complete re-authentication capabilities.",
   "author": {
     "name": "Dhruv Vakharwala",
     "url": "https://github.com/vakharwalad23/google-mcp"
@@ -24,7 +24,8 @@
     "drive",
     "tasks",
     "oauth",
-    "productivity"
+    "productivity",
+    "attachments"
   ],
   "server": {
     "type": "node",
@@ -59,6 +60,10 @@
     {
       "name": "gmail_delete",
       "description": "Delete emails"
+    },
+    {
+      "name": "gmail_download_attachments",
+      "description": "Download all attachments from an email to local storage"
     },
     {
       "name": "gmail_labels_list",
@@ -155,6 +160,78 @@
     {
       "name": "oauth_reauth",
       "description": "Complete re-authentication"
+    }
+  ],
+  "prompts": [
+    {
+      "name": "schedule_meeting_with_email",
+      "description": "Schedule a meeting and send email invitations with agenda",
+      "arguments": ["attendees", "meeting_title", "date", "duration", "agenda"],
+      "text": "Help me schedule a meeting and send invitations. First, use calendar_freebusy to find available time slots around ${arguments.date} for ${arguments.duration} minutes. Then create a calendar event titled '${arguments.meeting_title}' with attendees ${arguments.attendees}. Finally, send an email to all attendees with the meeting details and agenda: ${arguments.agenda}. Include the calendar invitation and provide a professional meeting summary."
+    },
+    {
+      "name": "process_email_attachments",
+      "description": "Download email attachments and organize them in Drive",
+      "arguments": ["email_query", "drive_folder_name"],
+      "text": "Help me process emails with attachments. First, use gmail_list to find emails matching '${arguments.email_query}'. For each email found, download all attachments using gmail_download_attachments. Then create a new folder in Google Drive called '${arguments.drive_folder_name}' and upload all downloaded attachments there. Finally, send me a summary report via email listing all processed files."
+    },
+    {
+      "name": "project_workflow_setup",
+      "description": "Set up a complete project workflow with tasks, calendar, and documentation",
+      "arguments": [
+        "project_name",
+        "team_members",
+        "deadline",
+        "project_description"
+      ],
+      "text": "Set up a complete project workflow for '${arguments.project_name}' with deadline ${arguments.deadline}. First, create a new task list for the project and add initial tasks like 'Project kickoff', 'Requirements gathering', and 'Final review'. Then schedule weekly check-in meetings with team members: ${arguments.team_members}. Create a project folder in Google Drive and add a project brief document with description: ${arguments.project_description}. Finally, send a project kickoff email to all team members with the project details, Drive folder link, and calendar invitations."
+    },
+    {
+      "name": "daily_productivity_digest",
+      "description": "Generate a daily productivity summary from all Google services",
+      "arguments": ["date"],
+      "text": "Create my daily productivity digest for ${arguments.date}. Check my calendar events for today, list my pending tasks from all task lists, summarize recent emails from today, and check for any new files shared with me on Drive. Compile everything into a comprehensive daily summary and either send it to me via email or save it as a document in my Drive 'Daily Digests' folder."
+    },
+    {
+      "name": "meeting_follow_up",
+      "description": "Follow up on a meeting with action items and shared documents",
+      "arguments": [
+        "meeting_title",
+        "attendees",
+        "action_items",
+        "documents_to_share"
+      ],
+      "text": "Help me follow up on the meeting '${arguments.meeting_title}'. First, create tasks for each action item: ${arguments.action_items} and assign appropriate due dates. Then share the specified documents from Drive: ${arguments.documents_to_share} with all meeting attendees: ${arguments.attendees}. Finally, send a follow-up email to all attendees summarizing the meeting, listing action items with assigned owners, and including links to shared documents."
+    },
+    {
+      "name": "email_cleanup_and_organize",
+      "description": "Clean up and organize emails based on criteria",
+      "arguments": ["cleanup_query", "label_to_apply", "days_old"],
+      "text": "Help me organize my email inbox. Search for emails matching '${arguments.cleanup_query}' that are older than ${arguments.days_old} days. Apply the label '${arguments.label_to_apply}' to relevant emails, download any important attachments to a Drive folder called 'Email Attachments Backup', and create a summary report of the cleanup process. Ask me which emails should be deleted permanently versus archived."
+    },
+    {
+      "name": "weekly_planning_session",
+      "description": "Plan the upcoming week across all Google services",
+      "arguments": ["week_start_date", "priorities"],
+      "text": "Help me plan my upcoming week starting ${arguments.week_start_date}. First, review my calendar for the week and identify any conflicts or gaps. Check my current tasks and prioritize them based on: ${arguments.priorities}. Look for any urgent emails that need responses. Then create a weekly planning document in Drive with my schedule, priorities, and goals. Finally, schedule focused work blocks in my calendar for high-priority tasks and send me a weekly plan summary via email."
+    },
+    {
+      "name": "client_onboarding_workflow",
+      "description": "Complete client onboarding process with documentation and scheduling",
+      "arguments": ["client_name", "client_email", "onboarding_date"],
+      "text": "Set up complete client onboarding for ${arguments.client_name} (${arguments.client_email}) starting ${arguments.onboarding_date}. Create a client folder in Drive with welcome documents and templates. Schedule initial consultation, project planning, and check-in meetings. Create a task list for onboarding steps like 'Send welcome package', 'Collect requirements', 'Setup project tools'. Send a professional welcome email with next steps, calendar invitations, and access to the shared Drive folder. Create a client information document to track progress."
+    },
+    {
+      "name": "document_collaboration_setup",
+      "description": "Set up document collaboration with team sharing and notifications",
+      "arguments": ["document_name", "collaborators", "project_folder"],
+      "text": "Set up collaborative document workflow for '${arguments.document_name}'. Create or locate the document in the '${arguments.project_folder}' Drive folder. Share it with collaborators: ${arguments.collaborators} with appropriate edit permissions. Send an email notification to all collaborators with document link, collaboration guidelines, and deadlines. Create tasks for document review phases and schedule review meetings. Set up a shared task list for document-related action items."
+    },
+    {
+      "name": "expense_report_automation",
+      "description": "Automate expense report processing from email receipts",
+      "arguments": ["expense_period", "expense_categories"],
+      "text": "Help me process expense reports for ${arguments.expense_period}. Search for emails containing receipts and expense-related attachments. Download all receipt attachments and organize them in a Drive folder called 'Expenses ${arguments.expense_period}'. Create a spreadsheet to track expenses by categories: ${arguments.expense_categories}. Create tasks for 'Review receipts', 'Calculate totals', and 'Submit expense report'. Send me a summary email with the expense folder link and next steps for approval."
     }
   ],
   "user_config": {
