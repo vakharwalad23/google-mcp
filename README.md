@@ -10,10 +10,10 @@ This is a collection of Google-native tools (e.g., Gmail, Calendar) for the [MCP
 
 ## Quick Install
 
-Click below for one-click install with `.dxt`:
+Click below for one-click install with `.mcpb`:
 
-<a href="https://github.com/vakharwalad23/google-mcp/releases/download/v1.0.0/google-mcp.dxt">
-  <img width="280" alt="Install with Claude DXT" src="https://github.com/user-attachments/assets/dfcf4fe2-d94d-4b6b-86e4-2794fea74fff" />
+<a href="https://github.com/vakharwalad23/google-mcp/releases/download/v1.1.0/google-mcp.mcpb">
+  <img width="280" alt="Install with Claude MCPB" src="https://github.com/user-attachments/assets/dfcf4fe2-d94d-4b6b-86e4-2794fea74fff" />
 </a>
 
 <details>
@@ -43,6 +43,30 @@ Click below for one-click install with `.dxt`:
 
 </details>
 
+## What's New in v1.1.0
+
+### 🆕 Major Features
+
+- **Complete Email Attachment Support**:
+  - ✉️ **Send emails with attachments** from local files or Google Drive
+  - 📥 **Download all email attachments** to local storage
+  - 🔄 **Dual attachment sources**: Local file paths or Google Drive file IDs
+  - 📁 **Smart file handling**: Automatic MIME type detection and filename sanitization
+
+### 🔧 Enhanced Email Capabilities
+
+- **Multi-source attachments**: Attach files from local storage or Google Drive in the same email
+- **Custom filenames**: Override original filenames for attachments
+- **File size validation**: Automatic 25MB Gmail limit enforcement
+- **Cross-platform downloads**: Auto-detection of Downloads folder on Windows, macOS, and Linux
+- **Conflict resolution**: Automatic file renaming to prevent overwrites
+
+### 📁 New & Enhanced Tools
+
+- `google_gmail_send_email`: Now supports attachments from local files and Google Drive
+- `google_gmail_draft_email`: Create drafts with attachments
+- `google_gmail_download_attachments`: Download all email attachments with customizable path
+
 ## Features
 
 - **OAuth Management**:
@@ -54,9 +78,10 @@ Click below for one-click install with `.dxt`:
 
 - **Gmail**:
 
-  - Send emails with multiple recipients (to, cc, bcc) and attachments.
+  - Send emails with multiple recipients (to, cc, bcc) and **attachments from local files or Google Drive**.
+  - **Download all email attachments** to local storage with cross-platform support.
   - List emails with custom queries, labels, and result limits.
-  - Read specific emails by ID.
+  - Read specific emails by ID with attachment information.
   - Manage labels (add, remove, list).
   - Draft and delete emails.
 
