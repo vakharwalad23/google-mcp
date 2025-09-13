@@ -179,11 +179,10 @@ export async function handleGmailDownloadAttachments(
   if (!isDownloadAttachmentsArgs(args)) {
     throw new Error("Invalid arguments for google_gmail_download_attachments");
   }
-  const { messageId, downloadPath, attachmentIds } = args;
+  const { messageId, downloadPath } = args;
   const result = await googleGmailInstance.downloadAttachments(
     messageId,
-    downloadPath,
-    attachmentIds
+    downloadPath
   );
   return {
     content: [{ type: "text", text: result }],

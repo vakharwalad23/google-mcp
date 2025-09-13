@@ -256,7 +256,7 @@ export const MODIFY_LABELS_TOOL: Tool = {
 
 export const DOWNLOAD_ATTACHMENTS_TOOL: Tool = {
   name: "google_gmail_download_attachments",
-  description: "Download attachments from a specific email",
+  description: "Download all attachments from a specific email",
   inputSchema: {
     type: "object",
     properties: {
@@ -268,12 +268,6 @@ export const DOWNLOAD_ATTACHMENTS_TOOL: Tool = {
         type: "string",
         description:
           "Path where to save the attachments (optional, defaults to user's Downloads folder)",
-      },
-      attachmentIds: {
-        type: "array",
-        items: { type: "string" },
-        description:
-          "Specific attachment IDs to download (optional, downloads all if not specified)",
       },
     },
     required: ["messageId"],

@@ -174,9 +174,8 @@ export default class GoogleGmail {
           result += `  ${index + 1}. ${att.filename} (${
             att.mimeType
           }, ${FileUtils.formatFileSize(att.size)})\n`;
-          result += `     Attachment ID: ${att.attachmentId}\n`;
         });
-        result += `\nUse google_gmail_download_attachments to download these files.\n\n`;
+        result += `\nUse google_gmail_download_attachments to download all attachments.\n\n`;
       }
 
       result += `Body: \n${body.substring(0, 1500)}${
@@ -561,31 +560,75 @@ export default class GoogleGmail {
       });
 
       const attachments: EmailAttachment[] = [];
-      const parts = response.data.payload.parts || [];
+      const payload = response.data.payload;
 
-      const extractAttachments = (parts: any[]) => {
-        for (const part of parts) {
+      const extractAttachments = (part: any) => {
+        // Check if this part is an attachment
+        if (part.body && part.body.attachmentId) {
+          const filename = part.filename || "unnamed_attachment";
+          const size = part.body.size || 0;
+          const attachmentId = part.body.attachmentId;
+
+          attachments.push({
+            attachmentId: attachmentId,
+            filename: filename,
+            mimeType: part.mimeType || "application/octet-stream",
+            size: parseInt(size.toString()) || 0,
+          });
+        }
+
+        // Also check for Content-Disposition header indicating attachment
+        if (part.headers) {
+          const contentDisposition = part.headers.find(
+            (h: any) => h.name.toLowerCase() === "content-disposition"
+          );
+
           if (
-            part.filename &&
-            part.filename.length > 0 &&
-            part.body.attachmentId
+            contentDisposition &&
+            contentDisposition.value.includes("attachment")
           ) {
-            attachments.push({
-              attachmentId: part.body.attachmentId,
-              filename: part.filename,
-              mimeType: part.mimeType || "application/octet-stream",
-              size: part.body.size || 0,
-            });
-          }
+            if (part.body && part.body.attachmentId) {
+              const filename =
+                part.filename ||
+                this.extractFilenameFromDisposition(contentDisposition.value) ||
+                "unnamed_attachment";
+              const size = part.body.size || 0;
+              const attachmentId = part.body.attachmentId;
 
-          // Recursively check nested parts
-          if (part.parts) {
-            extractAttachments(part.parts);
+              // Avoid duplicates
+              const exists = attachments.find(
+                (att) => att.attachmentId === attachmentId
+              );
+              if (!exists) {
+                attachments.push({
+                  attachmentId: attachmentId,
+                  filename: filename,
+                  mimeType: part.mimeType || "application/octet-stream",
+                  size: parseInt(size.toString()) || 0,
+                });
+              }
+            }
+          }
+        }
+
+        // Recursively check nested parts
+        if (part.parts && Array.isArray(part.parts)) {
+          for (const subPart of part.parts) {
+            extractAttachments(subPart);
           }
         }
       };
 
-      extractAttachments(parts);
+      // Start extraction from the root payload
+      if (payload.parts && Array.isArray(payload.parts)) {
+        for (const part of payload.parts) {
+          extractAttachments(part);
+        }
+      } else {
+        // Single part message
+        extractAttachments(payload);
+      }
+
       return attachments;
     } catch (error) {
       throw new Error(
@@ -596,10 +639,24 @@ export default class GoogleGmail {
     }
   }
 
+  private extractFilenameFromDisposition(disposition: string): string | null {
+    const filenameMatch = disposition.match(
+      /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/
+    );
+    if (filenameMatch) {
+      let filename = filenameMatch[1];
+      // Remove quotes if present
+      if (filename.startsWith('"') && filename.endsWith('"')) {
+        filename = filename.slice(1, -1);
+      }
+      return filename;
+    }
+    return null;
+  }
+
   async downloadAttachments(
     messageId: string,
-    downloadPath?: string,
-    attachmentIds?: string[]
+    downloadPath?: string
   ): Promise<string> {
     try {
       // Get all attachments from the email
@@ -609,24 +666,14 @@ export default class GoogleGmail {
         return "No attachments found in this email.";
       }
 
-      // Filter attachments if specific IDs are provided
-      const attachmentsToDownload = attachmentIds
-        ? emailAttachments.filter((att) =>
-            attachmentIds.includes(att.attachmentId)
-          )
-        : emailAttachments;
-
-      if (attachmentsToDownload.length === 0) {
-        return "No matching attachments found.";
-      }
-
       // Use default download path if not provided
       const targetPath = downloadPath || FileUtils.getDefaultDownloadPath();
 
       const downloadedFiles: string[] = [];
       let totalSize = 0;
+      const errors: string[] = [];
 
-      for (const attachment of attachmentsToDownload) {
+      for (const attachment of emailAttachments) {
         try {
           // Get the attachment data
           const attachmentResponse =
@@ -651,19 +698,25 @@ export default class GoogleGmail {
           downloadedFiles.push(filePath);
           totalSize += attachment.size;
         } catch (error) {
-          console.error(
-            `Failed to download attachment ${attachment.filename}:`,
-            error
-          );
-          // Continue with other attachments even if one fails
+          const errorMsg = `Failed to download ${attachment.filename}: ${
+            error instanceof Error ? error.message : String(error)
+          }`;
+          errors.push(errorMsg);
         }
       }
 
       if (downloadedFiles.length === 0) {
-        return "Failed to download any attachments.";
+        let result = "Failed to download any attachments.";
+        if (errors.length > 0) {
+          result += "\n\nErrors:\n" + errors.join("\n");
+        }
+        return result;
       }
 
       let result = `Successfully downloaded ${downloadedFiles.length} attachment(s)`;
+      if (errors.length > 0) {
+        result += ` (${errors.length} failed)`;
+      }
       result += `\nTotal size: ${FileUtils.formatFileSize(totalSize)}`;
       result += `\nDownload location: ${targetPath}`;
       result += `\n\nDownloaded files:`;
@@ -671,6 +724,10 @@ export default class GoogleGmail {
         const filename = path.basename(filePath);
         result += `\n  ${index + 1}. ${filename}`;
       });
+
+      if (errors.length > 0) {
+        result += `\n\nErrors:\n` + errors.join("\n");
+      }
 
       return result;
     } catch (error) {

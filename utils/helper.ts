@@ -427,13 +427,10 @@ export function isReauthenticateArgs(args: any): args is Record<string, never> {
 export function isDownloadAttachmentsArgs(args: any): args is {
   messageId: string;
   downloadPath?: string;
-  attachmentIds?: string[];
 } {
   return (
     typeof args === "object" &&
     typeof args.messageId === "string" &&
-    (args.downloadPath === undefined ||
-      typeof args.downloadPath === "string") &&
-    (args.attachmentIds === undefined || Array.isArray(args.attachmentIds))
+    (args.downloadPath === undefined || typeof args.downloadPath === "string")
   );
 }
