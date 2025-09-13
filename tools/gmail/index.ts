@@ -254,6 +254,32 @@ export const MODIFY_LABELS_TOOL: Tool = {
   },
 };
 
+export const DOWNLOAD_ATTACHMENTS_TOOL: Tool = {
+  name: "google_gmail_download_attachments",
+  description: "Download attachments from a specific email",
+  inputSchema: {
+    type: "object",
+    properties: {
+      messageId: {
+        type: "string",
+        description: "ID of the email to download attachments from",
+      },
+      downloadPath: {
+        type: "string",
+        description:
+          "Path where to save the attachments (optional, defaults to user's Downloads folder)",
+      },
+      attachmentIds: {
+        type: "array",
+        items: { type: "string" },
+        description:
+          "Specific attachment IDs to download (optional, downloads all if not specified)",
+      },
+    },
+    required: ["messageId"],
+  },
+};
+
 export const gmailTools = [
   LIST_LABELS_TOOL,
   LIST_EMAILS_TOOL,
@@ -263,4 +289,5 @@ export const gmailTools = [
   DRAFT_EMAIL_TOOL,
   DELETE_EMAIL_TOOL,
   MODIFY_LABELS_TOOL,
+  DOWNLOAD_ATTACHMENTS_TOOL,
 ];

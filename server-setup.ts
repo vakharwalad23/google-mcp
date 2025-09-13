@@ -171,6 +171,11 @@ export function createGoogleMcpServer() {
             args,
             googleGmailInstance
           );
+        case "google_gmail_download_attachments":
+          return await gmailHandlers.handleGmailDownloadAttachments(
+            args,
+            googleGmailInstance
+          );
 
         // Drive tools
         case "google_drive_list_files":

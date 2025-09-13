@@ -8,6 +8,7 @@ import {
   isDraftEmailArgs,
   isDeleteEmailArgs,
   isModifyLabelsArgs,
+  isDownloadAttachmentsArgs,
 } from "../utils/helper";
 
 export async function handleGmailListLabels(
@@ -164,6 +165,25 @@ export async function handleGmailModifyLabels(
     messageId,
     addLabelIds,
     removeLabelIds
+  );
+  return {
+    content: [{ type: "text", text: result }],
+    isError: false,
+  };
+}
+
+export async function handleGmailDownloadAttachments(
+  args: any,
+  googleGmailInstance: GoogleGmail
+) {
+  if (!isDownloadAttachmentsArgs(args)) {
+    throw new Error("Invalid arguments for google_gmail_download_attachments");
+  }
+  const { messageId, downloadPath, attachmentIds } = args;
+  const result = await googleGmailInstance.downloadAttachments(
+    messageId,
+    downloadPath,
+    attachmentIds
   );
   return {
     content: [{ type: "text", text: result }],

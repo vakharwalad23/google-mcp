@@ -1,5 +1,10 @@
 import { google } from "googleapis";
-import { FileUtils, type FileAttachment } from "./fileUtils";
+import * as path from "path";
+import {
+  FileUtils,
+  type FileAttachment,
+  type EmailAttachment,
+} from "./fileUtils";
 
 interface Attachment {
   filePath?: string;
@@ -152,6 +157,9 @@ export default class GoogleGmail {
         body = Buffer.from(payload.body.data, "base64").toString();
       }
 
+      // Get attachment information
+      const attachments = await this.getEmailAttachments(messageId);
+
       // Format the result
       let result = `Subject: ${subject}\n`;
       result += `From: ${from}\n`;
@@ -159,6 +167,18 @@ export default class GoogleGmail {
       result += `Date: ${date}\n`;
       result += `Labels: ${labelIds.join(", ")}\n\n`;
       result += `Snippet: ${snippet}\n\n`;
+
+      if (attachments.length > 0) {
+        result += `Attachments (${attachments.length}):\n`;
+        attachments.forEach((att, index) => {
+          result += `  ${index + 1}. ${att.filename} (${
+            att.mimeType
+          }, ${FileUtils.formatFileSize(att.size)})\n`;
+          result += `     Attachment ID: ${att.attachmentId}\n`;
+        });
+        result += `\nUse google_gmail_download_attachments to download these files.\n\n`;
+      }
+
       result += `Body: \n${body.substring(0, 1500)}${
         body.length > 1500 ? "... (truncated)" : ""
       }`;
@@ -526,6 +546,136 @@ export default class GoogleGmail {
     } catch (error) {
       throw new Error(
         `Failed to modify labels: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+    }
+  }
+
+  async getEmailAttachments(messageId: string): Promise<EmailAttachment[]> {
+    try {
+      const response = await this.gmail.users.messages.get({
+        userId: "me",
+        id: messageId,
+        format: "full",
+      });
+
+      const attachments: EmailAttachment[] = [];
+      const parts = response.data.payload.parts || [];
+
+      const extractAttachments = (parts: any[]) => {
+        for (const part of parts) {
+          if (
+            part.filename &&
+            part.filename.length > 0 &&
+            part.body.attachmentId
+          ) {
+            attachments.push({
+              attachmentId: part.body.attachmentId,
+              filename: part.filename,
+              mimeType: part.mimeType || "application/octet-stream",
+              size: part.body.size || 0,
+            });
+          }
+
+          // Recursively check nested parts
+          if (part.parts) {
+            extractAttachments(part.parts);
+          }
+        }
+      };
+
+      extractAttachments(parts);
+      return attachments;
+    } catch (error) {
+      throw new Error(
+        `Failed to get email attachments: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+    }
+  }
+
+  async downloadAttachments(
+    messageId: string,
+    downloadPath?: string,
+    attachmentIds?: string[]
+  ): Promise<string> {
+    try {
+      // Get all attachments from the email
+      const emailAttachments = await this.getEmailAttachments(messageId);
+
+      if (emailAttachments.length === 0) {
+        return "No attachments found in this email.";
+      }
+
+      // Filter attachments if specific IDs are provided
+      const attachmentsToDownload = attachmentIds
+        ? emailAttachments.filter((att) =>
+            attachmentIds.includes(att.attachmentId)
+          )
+        : emailAttachments;
+
+      if (attachmentsToDownload.length === 0) {
+        return "No matching attachments found.";
+      }
+
+      // Use default download path if not provided
+      const targetPath = downloadPath || FileUtils.getDefaultDownloadPath();
+
+      const downloadedFiles: string[] = [];
+      let totalSize = 0;
+
+      for (const attachment of attachmentsToDownload) {
+        try {
+          // Get the attachment data
+          const attachmentResponse =
+            await this.gmail.users.messages.attachments.get({
+              userId: "me",
+              messageId: messageId,
+              id: attachment.attachmentId,
+            });
+
+          // Sanitize filename to prevent issues
+          const sanitizedFilename = FileUtils.sanitizeFilename(
+            attachment.filename
+          );
+
+          // Save the attachment
+          const filePath = await FileUtils.saveBase64File(
+            attachmentResponse.data.data,
+            sanitizedFilename,
+            targetPath
+          );
+
+          downloadedFiles.push(filePath);
+          totalSize += attachment.size;
+        } catch (error) {
+          console.error(
+            `Failed to download attachment ${attachment.filename}:`,
+            error
+          );
+          // Continue with other attachments even if one fails
+        }
+      }
+
+      if (downloadedFiles.length === 0) {
+        return "Failed to download any attachments.";
+      }
+
+      let result = `Successfully downloaded ${downloadedFiles.length} attachment(s)`;
+      result += `\nTotal size: ${FileUtils.formatFileSize(totalSize)}`;
+      result += `\nDownload location: ${targetPath}`;
+      result += `\n\nDownloaded files:`;
+      downloadedFiles.forEach((filePath, index) => {
+        const filename = path.basename(filePath);
+        result += `\n  ${index + 1}. ${filename}`;
+      });
+
+      return result;
+    } catch (error) {
+      throw new Error(
+        `Failed to download attachments: ${
           error instanceof Error ? error.message : String(error)
         }`
       );
