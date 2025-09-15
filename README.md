@@ -285,12 +285,7 @@ For HTTP transport, configure your client with the server URL:
 {
   "mcpServers": {
     "google-mcp-http": {
-      "url": "http://localhost:3000/mcp",
-      "env": {
-        "GOOGLE_OAUTH_CLIENT_ID": "<YOUR_CLIENT_ID>",
-        "GOOGLE_OAUTH_CLIENT_SECRET": "<YOUR_CLIENT_SECRET>",
-        "GOOGLE_OAUTH_TOKEN_PATH": "<PATH_TO_STORE_TOKENS>"
-      }
+      "url": "http://localhost:3000/mcp"
     }
   }
 }
