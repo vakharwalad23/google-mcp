@@ -126,6 +126,10 @@ You can chain commands for workflows, e.g.:
 
 "List my unread emails, draft a reply to the latest one, and schedule a follow-up meeting tomorrow at 2 PM."
 
+## Hosted deployment
+
+A hosted deployment is available on [Fronteir AI](https://fronteir.ai/mcp/vakharwalad23-google-mcp).
+
 ## OAuth Token Management
 
 The server includes built-in OAuth token management to handle expired access tokens gracefully:
